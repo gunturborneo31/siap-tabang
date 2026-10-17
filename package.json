@@ -1,0 +1,13 @@
+{
+  "name": "siap-tabang",
+  "version": "1.0.0",
+  "description": "Sistem antrian pelayanan Kecamatan Tabang dengan database SQLite",
+  "main": "server.js",
+  "private": true,
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=22.13"
+  }
+}

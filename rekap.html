@@ -1,0 +1,322 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Rekap Antrian</title>
+<link rel="icon" href="logo-kukar.png">
+<style>
+  :root{--bg:#fbf5f4;--card:#fff;--ink:#2b1214;--muted:#7a6466;--brand:#c1121f;--brand-d:#8f0d17;--tint:#fdecec;--gold:#f2b705;--ok:#16a34a;--warn:#d97706;--bad:#5b0f14;--line:#ecdcdc}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--ink)}
+  header{background:linear-gradient(135deg,#7a0b14,#c1121f 55%,#d92b2f);color:#fff;padding:12px 24px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+  .brand{display:flex;align-items:center;gap:12px;min-width:0}
+  .brand .mark{width:46px;height:46px;border-radius:50%;background:#fff;border:3px solid var(--gold);display:grid;place-items:center;flex:none;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.25)}
+  .brand .mark img{width:100%;height:100%;object-fit:contain}
+  .brand .mark span{font-weight:900;font-size:22px;color:var(--brand);font-family:Georgia,serif}
+  .brand .mark.logo{display:block;width:auto;height:auto;background:none;border:none;border-radius:0;box-shadow:none;overflow:visible}
+  .brand .mark.logo img{display:block;height:56px;width:auto;max-width:none;filter:drop-shadow(0 2px 4px rgba(0,0,0,.35))}
+  .brand .t1{font-size:19px;font-weight:800;letter-spacing:1px;line-height:1.1}
+  .brand .t2{font-size:12px;opacity:.92;letter-spacing:.3px;margin-top:2px}
+  .brand .t3{font-size:11px;color:var(--gold);font-weight:700;letter-spacing:1.2px;text-transform:uppercase;margin-top:2px}
+  nav{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+  nav a,nav button{all:unset;cursor:pointer;color:#ffe3e3;padding:8px 16px;border-radius:8px;font-size:14px;font-weight:600}
+  nav a:hover,nav button:hover{background:rgba(255,255,255,.12)}
+  nav .active{background:#fff;color:var(--brand-d)}
+  nav .who{font-size:13px;color:#ffd6d6;padding:0 6px}
+  main{max-width:1100px;margin:0 auto;padding:24px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px;margin-bottom:16px}
+  h2{font-size:18px;margin:0 0 14px}
+  .label{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;font-weight:600}
+  .row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  input,select{padding:9px 10px;border:1.5px solid var(--line);border-radius:9px;font-size:14px;background:#fff;color:var(--ink);font-family:inherit}
+  input:focus,select:focus{outline:none;border-color:var(--brand)}
+  button.b{border:none;border-radius:10px;padding:10px 16px;font-size:14px;font-weight:700;cursor:pointer;color:#fff;background:var(--brand);font-family:inherit}
+  button.b:hover{filter:brightness(.93)}
+  button.b:disabled{background:#c5cbd9;cursor:not-allowed}
+  .b.ghost{background:#f6e9e9;color:var(--ink)}
+  .chips{display:flex;gap:8px;flex-wrap:wrap}
+  .chip{all:unset;cursor:pointer;padding:7px 14px;border-radius:99px;border:1.5px solid var(--line);background:#fff;font-size:13px;font-weight:600;color:var(--muted)}
+  .chip.on{background:var(--brand);border-color:var(--brand);color:#fff}
+  .tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
+  .tile{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px}
+  .tile .v{font-size:32px;font-weight:800;line-height:1.15;margin-top:4px;font-variant-numeric:tabular-nums}
+  .tile .s{font-size:12px;color:var(--muted);margin-top:2px}
+  .tile.main{background:linear-gradient(135deg,#8f0d17,#c1121f 60%,#e03a3e);color:#fff;border:none}
+  .tile.main .label,.tile.main .s{color:#ffd6d6}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .grid2 .card{margin-bottom:0}
+  .scroll{overflow-x:auto}
+  table{width:100%;border-collapse:collapse;font-size:14px}
+  th{text-align:left;color:var(--muted);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.6px;padding:6px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
+  td{padding:8px;border-bottom:1px solid var(--line);vertical-align:middle}
+  td.r,th.r{text-align:right;font-variant-numeric:tabular-nums}
+  td.no{font-weight:800}
+  .empty{color:var(--muted);font-size:14px;padding:14px 0}
+  .tag{display:inline-block;padding:3px 10px;border-radius:99px;font-size:12px;font-weight:700;white-space:nowrap}
+  .tag.done{background:#dcfce7;color:#166534}.tag.cancelled{background:#fee2e2;color:#991b1b}
+  .tag.manual{background:#fff3d6;color:#8a5a00;font-size:11px;padding:2px 8px}
+  .tag.pending{background:#fef3c7;color:#92400e}.tag.waiting,.tag.called{background:#e0e7ff;color:#3730a3}
+  .bar{height:8px;border-radius:4px;background:var(--brand);min-width:2px}
+  .login{max-width:380px;margin:40px auto}
+  .login label{display:block;margin:14px 0 6px}
+  .login input{width:100%}
+  .err{color:#b91c1c;font-size:14px;margin-top:12px;min-height:20px}
+  .hint{font-size:12px;color:var(--muted);margin-top:4px}
+  .hide{display:none!important}
+  .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:12px 20px;border-radius:10px;font-size:14px;opacity:0;pointer-events:none;transition:.25s;z-index:50}
+  .toast.show{opacity:1}
+  @media(max-width:760px){
+    header{padding:8px 12px}
+    .brand .mark{width:36px;height:36px;border-width:2px}
+    .brand .mark.logo{width:auto;height:auto}
+    .brand .mark.logo img{height:44px}
+    .brand .t1{font-size:15px}.brand .t2{font-size:10px}.brand .t3{font-size:9px}
+    nav a,nav button{padding:6px 10px;font-size:13px}
+    main{padding:12px}
+    .card{padding:14px}
+    .tiles{grid-template-columns:1fr 1fr;gap:10px}
+    .tile .v{font-size:24px}
+    .grid2{grid-template-columns:1fr}
+    .grid2 .card{margin-bottom:0}
+    td,th{padding:7px 5px;font-size:13px}
+  }
+  @media print{
+    header nav,.noprint{display:none!important}
+    body{background:#fff}
+    .card,.tile{break-inside:avoid}
+  }
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">
+    <div class="mark" id="brandMark"><span>T</span></div>
+    <div>
+      <div class="t3">Rekap Pelayanan</div>
+      <div class="t1">KECAMATAN TABANG</div>
+      <div class="t2">Kabupaten Kutai Kartanegara · Kalimantan Timur</div>
+    </div>
+  </div>
+  <nav>
+    <a href="/#/">Pengunjung</a>
+    <a href="/#/admin">Admin</a>
+    <a class="active" href="/rekap">Rekap</a>
+    <span class="who hide" id="who"></span>
+    <button type="button" class="hide" id="btn-logout" onclick="logout()">Keluar</button>
+  </nav>
+</header>
+
+<main>
+  <!-- ============ LOGIN ============ -->
+  <section id="view-login" class="hide">
+    <form class="card login" onsubmit="doLogin(event)">
+      <h2>Masuk ke Rekap</h2>
+      <div class="hint">Halaman ini hanya untuk admin kecamatan.</div>
+      <label class="label" for="l-user">Username</label>
+      <input id="l-user" autocomplete="username" required>
+      <label class="label" for="l-pass">Password</label>
+      <input id="l-pass" type="password" autocomplete="current-password" required>
+      <div class="err" id="l-err"></div>
+      <button class="b" style="width:100%;margin-top:6px" id="l-btn">Masuk</button>
+    </form>
+  </section>
+
+  <!-- ============ REKAP ============ -->
+  <section id="view-rekap" class="hide">
+    <div class="card noprint">
+      <div class="chips" id="presets" style="margin-bottom:12px"></div>
+      <div class="row">
+        <label class="label" for="f-from">Dari</label><input type="date" id="f-from">
+        <label class="label" for="f-to">Sampai</label><input type="date" id="f-to">
+        <button class="b" onclick="setPreset(null)">Tampilkan</button>
+        <button class="b ghost" onclick="downloadCsv()">⬇ Unduh CSV (Excel)</button>
+        <button class="b ghost" onclick="window.print()">🖨 Cetak</button>
+      </div>
+    </div>
+
+    <div class="label" id="period" style="margin:0 0 10px 4px"></div>
+    <div class="tiles" id="tiles"></div>
+
+    <div class="grid2">
+      <div class="card"><h2>Per Kasi</h2><div class="scroll" id="t-kasi"></div></div>
+      <div class="card"><h2>Per hari</h2><div class="scroll" id="t-day" style="max-height:360px;overflow-y:auto"></div></div>
+    </div>
+
+    <div class="card" style="margin-top:16px"><h2>Per layanan</h2><div class="scroll" id="t-svc"></div></div>
+
+    <div class="card">
+      <h2>Detail antrian</h2>
+      <div class="row noprint" style="margin-bottom:10px">
+        <input type="search" id="d-q" placeholder="🔍 Cari nomor / layanan..." oninput="renderDetail()" style="flex:1;min-width:180px">
+        <select id="d-st" onchange="renderDetail()">
+          <option value="">Semua status</option>
+          <option value="done">Lanjut</option><option value="pending">Pending</option>
+          <option value="cancelled">Batal</option><option value="waiting">Menunggu</option><option value="called">Dipanggil</option>
+        </select>
+        <select id="d-kasi" onchange="renderDetail()"></select>
+      </div>
+      <div class="scroll" id="t-detail"></div>
+      <div style="text-align:center;margin-top:10px" class="noprint"><button class="b ghost hide" id="d-more" onclick="detailLimit+=100;renderDetail()">Tampilkan lebih banyak</button></div>
+    </div>
+
+    <div class="card noprint">
+      <h2>Ganti password</h2>
+      <form class="row" onsubmit="changePass(event)">
+        <input type="password" id="p-old" placeholder="Password lama" autocomplete="current-password" required>
+        <input type="password" id="p-new" placeholder="Password baru (min. 6)" autocomplete="new-password" minlength="6" required>
+        <input type="password" id="p-new2" placeholder="Ulangi password baru" autocomplete="new-password" minlength="6" required>
+        <button class="b">Simpan</button>
+      </form>
+    </div>
+  </section>
+</main>
+<div class="toast" id="toast"></div>
+
+<script src="config.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
+const kasiName = c => (KASI.find(k => k.code === c) || {}).name || c;
+const KNOWN_SVC = new Set(KASI.flatMap(k => k.services.map(s => s.toLowerCase())));
+const manualTag = s => KNOWN_SVC.has(String(s).toLowerCase()) ? '' : ' <span class="tag manual" title="Diketik manual oleh pengunjung">✏️ manual</span>';
+const ymd = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+const fmtDay = s => new Date(s + 'T00:00').toLocaleDateString('id-ID', {weekday:'short', day:'numeric', month:'short', year:'numeric'});
+const hhmm = ms => ms ? new Date(ms).toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'}) : '—';
+const dur = ms => ms == null ? '—' : ms < 60000 ? '< 1 mnt' : ms < 3600000 ? Math.round(ms/60000) + ' mnt' : Math.floor(ms/3600000) + ' j ' + Math.round(ms%3600000/60000) + ' mnt';
+const num = n => n.toLocaleString('id-ID');
+const STATUS = {done:'Lanjut', pending:'Pending', cancelled:'Batal', waiting:'Menunggu', called:'Dipanggil'};
+function toast(msg, ms){ const t = $('toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.remove('show'), ms || 2600); }
+
+async function api(path, body){
+  const r = await fetch(path, body ? {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)} : {cache:'no-store'});
+  const j = await r.json().catch(() => ({}));
+  if(r.status === 401 && path !== '/api/login' && path !== '/api/password'){ showLogin(); throw new Error(j.error || 'Silakan login'); }
+  if(!r.ok) throw new Error(j.error || ('HTTP ' + r.status));
+  return j;
+}
+
+/* ===== LOGIN ===== */
+function showLogin(){
+  $('view-login').classList.remove('hide'); $('view-rekap').classList.add('hide');
+  $('who').classList.add('hide'); $('btn-logout').classList.add('hide');
+  setTimeout(() => $('l-user').focus(), 50);
+}
+function showRekap(user){
+  $('view-login').classList.add('hide'); $('view-rekap').classList.remove('hide');
+  $('who').textContent = '👤 ' + user; $('who').classList.remove('hide'); $('btn-logout').classList.remove('hide');
+  load();
+}
+async function doLogin(e){
+  e.preventDefault();
+  $('l-err').textContent = ''; $('l-btn').disabled = true;
+  try{
+    const {user} = await api('/api/login', {username:$('l-user').value, password:$('l-pass').value});
+    $('l-pass').value = '';
+    showRekap(user);
+  }catch(err){ $('l-err').textContent = err.message; }
+  finally{ $('l-btn').disabled = false; }
+}
+async function logout(){
+  try{ await api('/api/logout', {}); }catch(e){}
+  data = null; showLogin();
+}
+async function changePass(e){
+  e.preventDefault();
+  if($('p-new').value !== $('p-new2').value) return toast('Ulangi password baru tidak sama.');
+  try{
+    await api('/api/password', {old:$('p-old').value, pass:$('p-new').value});
+    e.target.reset(); toast('Password berhasil diganti.');
+  }catch(err){ toast(err.message, 5000); }
+}
+
+/* ===== FILTER PERIODE ===== */
+const PRESETS = [
+  ['today', 'Hari ini', () => { const t = ymd(new Date()); return [t, t]; }],
+  ['yesterday', 'Kemarin', () => { const d = new Date(); d.setDate(d.getDate()-1); const t = ymd(d); return [t, t]; }],
+  ['7d', '7 hari terakhir', () => { const d = new Date(); d.setDate(d.getDate()-6); return [ymd(d), ymd(new Date())]; }],
+  ['month', 'Bulan ini', () => { const d = new Date(); return [ymd(new Date(d.getFullYear(), d.getMonth(), 1)), ymd(d)]; }],
+  ['lastmonth', 'Bulan lalu', () => { const d = new Date(); return [ymd(new Date(d.getFullYear(), d.getMonth()-1, 1)), ymd(new Date(d.getFullYear(), d.getMonth(), 0))]; }],
+  ['year', 'Tahun ini', () => { const d = new Date(); return [d.getFullYear() + '-01-01', ymd(d)]; }],
+  ['all', 'Semua', () => ['all', ymd(new Date())]],
+];
+let preset = 'today', data = null, detailLimit = 100;
+function renderPresets(){
+  $('presets').innerHTML = PRESETS.map(([k, label]) => `<button class="chip ${preset === k ? 'on' : ''}" onclick="setPreset('${k}')">${label}</button>`).join('');
+}
+function setPreset(k){
+  preset = k;
+  if(k){ const [f, t] = PRESETS.find(p => p[0] === k)[2](); $('f-from').value = f === 'all' ? '' : f; $('f-to').value = t; }
+  load();
+}
+function rangeQuery(){
+  const from = preset === 'all' ? 'all' : ($('f-from').value || ymd(new Date()));
+  const to = $('f-to').value || ymd(new Date());
+  return `from=${from}&to=${to}`;
+}
+function downloadCsv(){ location.href = '/api/export.csv?' + rangeQuery(); }
+
+/* ===== MUAT & TAMPILKAN ===== */
+async function load(){
+  renderPresets();
+  try{ data = await api('/api/rekap?' + rangeQuery()); }
+  catch(e){ if(e.message !== 'Silakan login') toast('Gagal memuat rekap: ' + e.message, 5000); return; }
+  if(preset === 'all') $('f-from').value = data.from;
+  detailLimit = 100;
+  render();
+}
+function render(){
+  const d = data, st = d.status;
+  $('period').textContent = 'Periode: ' + (d.from === d.to ? fmtDay(d.from) : fmtDay(d.from) + ' s/d ' + fmtDay(d.to));
+  const pct = n => d.total ? Math.round(n / d.total * 100) + '% dari total' : '—';
+  const peak = d.byHour.indexOf(Math.max(...d.byHour));
+  const tiles = [
+    ['main', 'Total antrian', num(d.total), d.byDay.length + ' hari ada layanan'],
+    ['', 'Lanjut (selesai)', num(st.done), pct(st.done)],
+    ['', 'Pending', num(st.pending), pct(st.pending)],
+    ['', 'Batal', num(st.cancelled), pct(st.cancelled)],
+    ['', 'Belum dilayani', num(st.waiting + st.called), 'menunggu / sedang dipanggil'],
+    ['', 'Rata-rata tunggu', dur(d.avgWaitMs), 'ambil nomor → dipanggil'],
+    ['', 'Rata-rata layanan', dur(d.avgServeMs), 'dipanggil → selesai'],
+    ['', 'Jam tersibuk', d.total ? String(peak).padStart(2,'0') + '.00' : '—', d.total ? num(d.byHour[peak]) + ' nomor diambil' : ''],
+  ];
+  $('tiles').innerHTML = tiles.map(([c, l, v, s]) => `<div class="tile ${c}"><div class="label">${l}</div><div class="v">${v}</div><div class="s">${s}</div></div>`).join('');
+
+  const none = '<div class="empty">Tidak ada data pada periode ini.</div>';
+  $('t-kasi').innerHTML = d.byKasi.length ? `<table><tr><th>Kasi</th><th class="r">Total</th><th class="r">Lanjut</th><th class="r">Pending</th><th class="r">Batal</th></tr>` +
+    d.byKasi.map(k => `<tr><td><b>${esc(k.code)}</b> · ${esc(kasiName(k.code))}</td><td class="r"><b>${num(k.total)}</b></td><td class="r">${num(k.done)}</td><td class="r">${num(k.pending)}</td><td class="r">${num(k.cancelled)}</td></tr>`).join('') + '</table>' : none;
+
+  $('t-day').innerHTML = d.byDay.length ? `<table><tr><th>Tanggal</th><th class="r">Total</th><th class="r">Lanjut</th><th class="r">Pending</th><th class="r">Batal</th></tr>` +
+    d.byDay.map(x => `<tr><td>${fmtDay(x.day)}</td><td class="r"><b>${num(x.total)}</b></td><td class="r">${num(x.done)}</td><td class="r">${num(x.pending)}</td><td class="r">${num(x.cancelled)}</td></tr>`).join('') + '</table>' : none;
+
+  const maxSvc = d.byService.length ? d.byService[0].total : 1;
+  $('t-svc').innerHTML = d.byService.length ? `<table><tr><th style="width:36px">No</th><th>Layanan</th><th>Kasi</th><th class="r">Jumlah</th><th style="width:22%"></th></tr>` +
+    d.byService.map((s, i) => `<tr><td>${i+1}</td><td>${esc(s.svc)}${manualTag(s.svc)}</td><td>${esc(kasiName(s.code))}</td><td class="r"><b>${num(s.total)}</b></td>
+      <td><div class="bar" style="width:${Math.max(2, s.total / maxSvc * 100)}%" title="${s.total}"></div></td></tr>`).join('') + '</table>' : none;
+
+  const ks = $('d-kasi'), cur = ks.value;
+  ks.innerHTML = '<option value="">Semua Kasi</option>' + KASI.map(k => `<option value="${k.code}">${esc(k.name)}</option>`).join('');
+  ks.value = cur;
+  renderDetail();
+}
+function renderDetail(){
+  if(!data) return;
+  const q = $('d-q').value.trim().toLowerCase(), st = $('d-st').value, kc = $('d-kasi').value;
+  const rows = data.tickets.filter(t => (!st || t.status === st) && (!kc || t.code === kc) && (!q || t.no.includes(q) || t.svc.toLowerCase().includes(q)));
+  const shown = rows.slice(0, detailLimit);
+  $('t-detail').innerHTML = rows.length ? `<div class="hint" style="margin-bottom:6px">${num(rows.length)} antrian${rows.length > shown.length ? ', ditampilkan ' + num(shown.length) : ''}</div>
+    <table><tr><th>Tanggal</th><th>No</th><th>Layanan</th><th>Kasi</th><th>Status</th><th class="r">Loket</th><th>Ambil</th><th>Dipanggil</th><th>Selesai</th><th class="r">Tunggu</th></tr>` +
+    shown.map(t => `<tr><td style="white-space:nowrap">${fmtDay(t.day)}</td><td class="no">${t.no}</td><td>${esc(t.svc)}${manualTag(t.svc)}</td><td>${esc(t.code)}</td>
+      <td><span class="tag ${t.status}">${STATUS[t.status] || esc(t.status)}</span></td><td class="r">${t.loket || '—'}</td>
+      <td>${hhmm(t.at)}</td><td>${hhmm(t.calledAt)}</td><td>${hhmm(t.doneAt)}</td><td class="r">${t.calledAt ? dur(t.calledAt - t.at) : '—'}</td></tr>`).join('') + '</table>'
+    : '<div class="empty">Tidak ada antrian yang cocok.</div>';
+  $('d-more').classList.toggle('hide', rows.length <= shown.length);
+}
+
+/* ===== MULAI ===== */
+if(LOGO_URL){ const m = $('brandMark'); m.innerHTML = ''; m.classList.add('logo'); const im = new Image(); im.alt = 'Logo Kabupaten Kutai Kartanegara'; im.src = LOGO_URL; im.onerror = () => { m.classList.remove('logo'); m.innerHTML = '<span>T</span>'; }; m.appendChild(im); }
+$('f-from').value = $('f-to').value = ymd(new Date());
+api('/api/me').then(r => showRekap(r.user)).catch(() => {});
+</script>
+</body>
+</html>

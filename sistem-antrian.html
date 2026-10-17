@@ -1,0 +1,1001 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sistem Antrian</title>
+<link rel="icon" href="logo-kukar.png">
+<style>
+  :root{--bg:#fbf5f4;--card:#fff;--ink:#2b1214;--muted:#7a6466;--brand:#c1121f;--brand-d:#8f0d17;--tint:#fdecec;--gold:#f2b705;--ok:#16a34a;--warn:#d97706;--bad:#5b0f14;--line:#ecdcdc}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--ink)}
+  header{background:linear-gradient(135deg,#7a0b14,#c1121f 55%,#d92b2f);color:#fff;padding:12px 24px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;position:relative}
+  .brand{display:flex;align-items:center;gap:12px;min-width:0}
+  .brand .mark{width:46px;height:46px;border-radius:50%;background:#fff;border:3px solid var(--gold);display:grid;place-items:center;flex:none;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.25)}
+  .brand .mark img{width:100%;height:100%;object-fit:contain}
+  .brand .mark span{font-weight:900;font-size:22px;color:var(--brand);font-family:Georgia,serif}
+  .brand .mark.logo{display:block;width:auto;height:auto;background:none;border:none;border-radius:0;box-shadow:none;overflow:visible}
+  .brand .mark.logo img{display:block;height:56px;width:auto;max-width:none;filter:drop-shadow(0 2px 4px rgba(0,0,0,.35))}
+  .brand .t1{font-size:19px;font-weight:800;letter-spacing:1px;line-height:1.1}
+  .brand .t2{font-size:12px;opacity:.92;letter-spacing:.3px;margin-top:2px}
+  .brand .t3{font-size:11px;color:var(--gold);font-weight:700;letter-spacing:1.2px;text-transform:uppercase;margin-top:2px}
+  .welcome{background:var(--tint);border:1px solid var(--line);border-left:6px solid var(--brand);border-radius:12px;padding:12px 16px;margin-bottom:16px}
+  .welcome b{color:var(--brand-d);font-size:17px}
+  .welcome div{font-size:14px;color:var(--muted);margin-top:2px}
+  nav{display:flex;gap:6px}
+  nav button{all:unset;cursor:pointer;color:#ffe3e3;padding:8px 16px;border-radius:8px;font-size:14px;font-weight:600}
+  nav button:hover{background:rgba(255,255,255,.12)}
+  nav button.active{background:#fff;color:var(--brand-d)}
+  nav button.on{background:#16a34a;color:#fff}
+  .modal select{padding:8px;border:1px solid var(--line);border-radius:8px;font-size:14px;background:#fff}
+  main{max-width:1100px;margin:0 auto;padding:24px}
+  .stats{display:grid;grid-template-columns:2fr 1fr 1fr;gap:16px;margin-bottom:24px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px}
+  .label{font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;font-weight:600}
+  .big{font-size:76px;font-weight:800;line-height:1.05;margin:6px 0;font-variant-numeric:tabular-nums}
+  .mid{font-size:56px;font-weight:800;line-height:1.1;margin:6px 0}
+  .now{background:linear-gradient(135deg,#8f0d17,#c1121f 60%,#e03a3e);color:#fff;border:none}
+  .now .label{color:#ffd6d6}
+  .sub{font-size:15px;opacity:.9}
+  h2{font-size:18px;margin:0 0 14px}
+  .services{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px}
+  .svc{all:unset;cursor:pointer;background:var(--card);border:2px solid var(--line);border-radius:16px;padding:24px 20px;display:flex;flex-direction:column;gap:8px;transition:.15s}
+  .svc:hover,.svc:focus-visible{border-color:var(--brand);transform:translateY(-2px);box-shadow:0 8px 24px rgba(193,18,31,.18)}
+  .svc .code{width:44px;height:44px;border-radius:12px;background:var(--tint);color:var(--brand);font-weight:800;font-size:22px;display:grid;place-items:center}
+  .svc .name{font-size:19px;font-weight:700}
+  .svc .meta{font-size:14px;color:var(--muted)}
+  .toolbar{display:flex;flex-direction:column;gap:10px;margin-bottom:14px}
+  .srow{display:flex;gap:10px}
+  #sortSel{flex:none;padding:0 12px;border:2px solid var(--line);border-radius:12px;font-size:15px;font-weight:600;background:#fff;color:var(--ink);cursor:pointer;outline:none}
+  #sortSel:focus{border-color:var(--brand)}
+  #q{flex:1;min-width:0;width:100%;padding:13px 16px;border:2px solid var(--line);border-radius:12px;font-size:16px;background:#fff;color:var(--ink);outline:none}
+  #q:focus{border-color:var(--brand)}
+  .chips{display:flex;gap:8px;flex-wrap:wrap}
+  .chip{all:unset;cursor:pointer;padding:7px 14px;border-radius:99px;border:1.5px solid var(--line);background:#fff;font-size:13px;font-weight:600;color:var(--muted)}
+  .chip.on{background:var(--brand);border-color:var(--brand);color:#fff}
+  .card.flat{padding:4px 14px 8px}
+  .card.flat td{font-size:15px}
+  .card.flat td.n{color:var(--muted);font-weight:600}
+  .card.flat .pop{font-size:12px;color:var(--warn);font-weight:600;margin-top:2px}
+  .card.flat .pop.hist{color:var(--muted);font-weight:500}
+  .card.flat tr.newrow td{background:#fff8e6}
+  .newsvc{color:var(--brand-d)}
+  .manual-tip{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;margin-top:12px;font-size:14px;color:var(--muted);text-align:center}
+  .svcsub{font-size:12px;color:var(--muted);margin-top:2px}
+  button.b.pen{padding:6px 10px;font-size:15px;line-height:1}
+  @keyframes flash{0%,60%{background:#fff3c4}100%{background:transparent}}
+  tr.flash td{animation:flash 2.5s ease-out}
+  .acc{background:var(--card);border:1px solid var(--line);border-radius:14px;margin-bottom:12px;overflow:hidden}
+  .acc-h{all:unset;box-sizing:border-box;cursor:pointer;width:100%;display:flex;align-items:center;gap:12px;padding:14px 18px;background:var(--tint)}
+  .acc-h .code{width:32px;height:32px;border-radius:9px;background:var(--brand);color:#fff;font-weight:800;display:grid;place-items:center;flex:none}
+  .acc-h b{font-size:16px;flex:1}
+  .acc-h .cnt{font-size:13px;color:var(--muted)}
+  .acc-h .chev{color:var(--muted);width:16px;text-align:center}
+  .acc-b{padding:4px 12px 8px}
+  .acc-b td.n{color:var(--muted);font-weight:600}
+  .acc-b td{font-size:15px}
+  .svclist{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:10px}
+  .item{all:unset;cursor:pointer;box-sizing:border-box;background:var(--card);border:2px solid var(--line);border-radius:12px;padding:14px 16px;font-weight:600;display:flex;align-items:center;justify-content:space-between;gap:12px;transition:.15s}
+  .item:hover,.item:focus-visible{border-color:var(--brand);background:#fff6f6}
+  .item .go{color:var(--brand);font-size:13px;white-space:nowrap}
+  button.b{border:none;border-radius:10px;padding:10px 16px;font-size:14px;font-weight:700;cursor:pointer;color:#fff;background:var(--brand)}
+  button.b:hover{filter:brightness(.93)}
+  button.b:disabled{background:#c5cbd9;cursor:not-allowed;filter:none}
+  .b.ok{background:var(--ok)} .b.warn{background:var(--warn)} .b.bad{background:var(--bad)} .b.ghost{background:#f6e9e9;color:var(--ink)}
+  .current{display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap}
+  .actions{display:flex;gap:8px;flex-wrap:wrap}
+  .actions .b{padding:14px 20px;font-size:15px}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px}
+  table{width:100%;border-collapse:collapse;font-size:14px}
+  th{text-align:left;color:var(--muted);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.6px;padding:6px 8px;border-bottom:1px solid var(--line)}
+  td{padding:9px 8px;border-bottom:1px solid var(--line);vertical-align:middle}
+  td.no{font-weight:800;font-size:16px}
+  .empty{color:var(--muted);font-size:14px;padding:14px 0}
+  .tag{display:inline-block;padding:3px 10px;border-radius:99px;font-size:12px;font-weight:700}
+  .tag.done{background:#dcfce7;color:#166534}.tag.cancelled{background:#fee2e2;color:#991b1b}
+  .row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  input[type=number]{width:70px;padding:8px;border:1px solid var(--line);border-radius:8px;font-size:14px}
+  .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:12px 20px;border-radius:10px;font-size:14px;opacity:0;pointer-events:none;transition:.25s;z-index:50}
+  .toast.show{opacity:1}
+  /* modal tiket */
+  .modal{position:fixed;inset:0;background:rgba(20,33,61,.6);display:none;place-items:center;z-index:40}
+  .modal.open{display:grid}
+  .ticket{background:#fff;border-radius:18px;padding:28px 32px;width:min(360px,92vw);text-align:center}
+  .ticket .inst{font-weight:700;font-size:15px;letter-spacing:.5px}
+  .ticket .tno{font-size:84px;font-weight:800;line-height:1.1;margin:10px 0}
+  .ticket .tsvc{font-size:20px;font-weight:700}
+  .ticket hr{border:none;border-top:2px dashed #bbb;margin:14px 0}
+  .ticket .info{font-size:14px;color:#444;line-height:1.7}
+  .hide{display:none!important}
+  @media(max-width:760px){
+    header{padding:8px 12px}
+    .brand .mark{width:36px;height:36px;border-width:2px}
+    .brand .mark span{font-size:17px}
+    .brand .mark.logo{width:auto;height:auto}
+    .brand .mark.logo img{height:44px}
+    .brand .t1{font-size:15px;letter-spacing:.6px}
+    .brand .t2{font-size:10px}
+    .brand .t3{font-size:9px}
+    .welcome{display:none}
+    nav{flex-wrap:wrap;gap:4px;width:100%;min-width:0}
+    nav button{padding:6px 10px;font-size:13px}
+    main{padding:12px}
+    .grid2{grid-template-columns:1fr}
+    /* halaman pengunjung: ringkas agar muat 1 layar di HP */
+    #view-kiosk .stats{grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+    #view-kiosk .stats .now{grid-column:1/-1}
+    #view-kiosk .card{padding:12px 14px;border-radius:12px}
+    #view-kiosk .label{font-size:11px;letter-spacing:.5px}
+    #view-kiosk .big{font-size:46px;margin:2px 0}
+    #view-kiosk .mid{font-size:30px;margin:2px 0}
+    #view-kiosk .sub{font-size:12px}
+    #view-kiosk h2{font-size:15px;margin:0 0 8px}
+    #view-kiosk .services{grid-template-columns:1fr 1fr;gap:10px}
+    #view-kiosk .svc{padding:12px;gap:4px;border-radius:12px}
+    #view-kiosk .svc .code{width:30px;height:30px;font-size:16px;border-radius:8px}
+    #view-kiosk .svc .name{font-size:14px;line-height:1.25}
+    #view-kiosk .svc .meta{font-size:11px}
+    .hint{display:none}
+    #view-kiosk .toolbar{gap:8px;margin-bottom:8px}
+    #q{padding:10px 12px;font-size:15px}
+    #sortSel{padding:0 8px;font-size:13px;max-width:128px}
+    .srow{gap:8px}
+    .chips{flex-wrap:nowrap;overflow-x:auto;padding-bottom:2px}
+    .chip{white-space:nowrap;padding:6px 12px}
+    #picklist{max-height:calc(100vh - 360px);min-height:200px;overflow-y:auto}
+    #view-kiosk .card.flat{padding:2px 8px 6px}
+    .card.flat td{font-size:13px;padding:7px 4px}
+    .card.flat .b{padding:6px 10px;font-size:12px}
+    .acc{margin-bottom:8px}
+    .acc-h{padding:10px 12px;gap:8px}
+    .acc-h b{font-size:14px}
+    .acc-h .cnt{font-size:11px}
+    .acc-b{padding:2px 8px 6px}
+    .acc-b td{font-size:13px;padding:7px 4px}
+    .acc-b .b{padding:6px 10px;font-size:12px}
+    #view-kiosk .svclist{grid-template-columns:1fr;gap:8px;max-height:calc(100vh - 330px);min-height:180px;overflow-y:auto}
+    #view-kiosk .item{padding:10px 12px;font-size:13px;border-radius:10px}
+    #view-kiosk .item .go{display:none}
+    #view-kiosk .b{padding:8px 12px}
+  }
+  #printArea{display:none}
+  @media print{
+    @page{margin:3mm}
+    html,body{background:#fff!important;margin:0!important;padding:0!important}
+    body>*:not(#printArea){display:none!important}
+    #printArea{display:block!important}
+    .pt{width:100%;max-width:74mm;margin:0 auto;text-align:center;color:#000;font-family:Arial,Helvetica,sans-serif}
+    .pt .i{font-weight:700;font-size:14px;letter-spacing:.5px}
+    .pt .n{font-size:64px;font-weight:800;line-height:1.1;margin:6px 0}
+    .pt .s{font-size:16px;font-weight:700;line-height:1.3}
+    .pt .s div{font-size:13px;font-weight:600;margin-top:3px}
+    .pt .f{font-size:12px;line-height:1.6}
+    .pt hr{border:0;border-top:2px dashed #000;margin:8px 0}
+  }
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">
+    <div class="mark" id="brandMark"><span>T</span></div>
+    <div>
+      <div class="t3">Pelayanan Publik</div>
+      <div class="t1">KECAMATAN TABANG</div>
+      <div class="t2">Kabupaten Kutai Kartanegara · Kalimantan Timur</div>
+    </div>
+  </div>
+  <nav>
+    <button type="button" id="nav-kiosk" onclick="go('kiosk')">Pengunjung</button>
+    <button type="button" id="nav-admin" onclick="go('admin')">Admin</button>
+    <button type="button" id="nav-rekap" onclick="openRekap()">Rekap</button>
+    <button type="button" id="btn-printer" onclick="openPrinter()">🖨 Hubungkan printer</button>
+  </nav>
+</header>
+
+<main>
+  <!-- ============ HALAMAN PENGUNJUNG ============ -->
+  <section id="view-kiosk">
+    <div class="welcome"><b>Selamat datang di Kantor Kecamatan Tabang</b>
+      <div>Pilih layanan yang Anda butuhkan, lalu ambil nomor antrian.</div></div>
+    <div class="stats">
+      <div class="card now">
+        <div class="label">Sedang dilayani</div>
+        <div class="big" id="k-now">—</div>
+        <div class="sub" id="k-nowsvc">Belum ada antrian dipanggil</div>
+      </div>
+      <div class="card">
+        <div class="label">Antrian menunggu</div>
+        <div class="mid" id="k-wait">0</div>
+        <div class="sub" style="color:var(--muted)">orang</div>
+      </div>
+      <div class="card">
+        <div class="label">Antrian pending</div>
+        <div class="mid" id="k-pend" style="color:var(--warn)">0</div>
+        <div class="sub" style="color:var(--muted)">berkas belum lengkap</div>
+      </div>
+    </div>
+    <div class="toolbar">
+      <div class="srow">
+        <input type="search" id="q" placeholder="🔍 Cari atau ketik layanan..." oninput="setQ(this.value)" autocomplete="off" maxlength="100">
+        <select id="sortSel" onchange="setSort(this.value)" aria-label="Urutkan">
+          <option value="asli">Urutan: Bawaan</option>
+          <option value="pop">🔥 Terpopuler</option>
+          <option value="az">Nama A → Z</option>
+          <option value="za">Nama Z → A</option>
+        </select>
+      </div>
+    </div>
+    <div id="picklist"></div>
+  </section>
+
+  <!-- ============ LOGIN ADMIN ============ -->
+  <section id="view-login" class="hide">
+    <form class="card" style="max-width:380px;margin:40px auto" onsubmit="adminLogin(event)">
+      <h2>🔒 Halaman Admin</h2>
+      <div class="sub" style="color:var(--muted);font-size:14px;margin-bottom:14px">Masukkan password admin untuk membuka halaman pemanggil antrian.</div>
+      <label class="label" for="adm-pass">Password</label>
+      <input type="password" id="adm-pass" autocomplete="current-password" required
+        style="display:block;width:100%;margin-top:6px;padding:11px 12px;border:1.5px solid var(--line);border-radius:10px;font-size:15px">
+      <div id="adm-err" style="color:#b91c1c;font-size:14px;min-height:20px;margin:10px 0 4px"></div>
+      <button class="b" id="adm-btn" style="width:100%">Masuk</button>
+    </form>
+  </section>
+
+  <!-- ============ HALAMAN ADMIN ============ -->
+  <section id="view-admin" class="hide">
+    <div class="card">
+      <div class="current">
+        <div>
+          <div class="label">Sedang dipanggil</div>
+          <div class="mid" id="a-now">—</div>
+          <div class="sub" id="a-nowsvc" style="color:var(--muted)">Belum ada antrian dipanggil</div>
+        </div>
+        <div>
+          <div class="row" style="margin-bottom:10px">
+            <label class="label" for="loket">Loket</label>
+            <input type="number" id="loket" min="1" value="1">
+            <button class="b" id="btn-next">▶ Panggil berikutnya</button>
+          </div>
+          <div class="actions" id="a-actions">
+            <button class="b ghost" id="btn-recall">📢 Panggil</button>
+            <button class="b ok" id="btn-lanjut">✔ Lanjut</button>
+            <button class="b warn" id="btn-pending">⏸ Pending</button>
+            <button class="b bad" id="btn-batal">✖ Batal</button>
+          </div>
+        </div>
+      </div>
+      <div class="sub" style="color:var(--muted);margin-top:12px;font-size:13px">
+        Cek berkas pengunjung: <b>Lanjut</b> jika sesuai, <b>Pending</b> jika belum lengkap (bisa dipanggil lagi nanti), <b>Batal</b> jika dibatalkan.
+      </div>
+    </div>
+
+    <div class="grid2">
+      <div class="card">
+        <h2>Menunggu (<span id="a-wcount">0</span>)</h2>
+        <div id="a-waiting"></div>
+      </div>
+      <div class="card">
+        <h2>Pending (<span id="a-pcount">0</span>)</h2>
+        <div id="a-pending"></div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:16px">
+      <div class="row" style="justify-content:space-between;margin-bottom:10px">
+        <h2 style="margin:0">Riwayat hari ini <span id="a-hcount" style="font-size:13px;color:var(--muted);font-weight:600"></span></h2>
+        <div class="chips" id="a-hfilter">
+          <button class="chip" data-f="all" onclick="setHistFilter('all')">Semua</button>
+          <button class="chip" data-f="done" onclick="setHistFilter('done')">Lanjut</button>
+          <button class="chip" data-f="cancelled" onclick="setHistFilter('cancelled')">Batal</button>
+        </div>
+      </div>
+      <div class="sub" style="color:var(--muted);font-size:13px;margin-bottom:6px">Salah batal? Klik tombol <b>✏️</b> pada baris antrian untuk mengembalikannya ke daftar Menunggu.</div>
+      <div id="a-history" style="max-height:420px;overflow-y:auto"></div>
+    </div>
+
+    <div class="card" style="margin-top:16px">
+      <div class="row" style="justify-content:space-between">
+        <div><h2 style="margin:0">Rekap antrian</h2>
+          <div class="sub" style="color:var(--muted);font-size:13px">Statistik & laporan seluruh antrian. Perlu login admin.</div></div>
+        <div class="actions"><button class="b" onclick="openRekap()">📊 Buka Rekap</button>
+          <button class="b ghost" onclick="adminLogout()">🔒 Keluar admin</button></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<!-- Modal tiket -->
+<div class="modal" id="modal" onclick="if(event.target===this)closeModal()">
+  <div class="ticket" id="ticketPrint">
+    <div class="inst">NOMOR ANTRIAN ANDA</div>
+    <div class="tno" id="t-no">A001</div>
+    <div class="tsvc" id="t-svc"></div>
+    <hr>
+    <div class="info" id="t-info"></div>
+    <hr>
+    <div class="info">Mohon menunggu hingga nomor Anda dipanggil.<br>Siapkan berkas persyaratan.</div>
+    <div class="actions" style="justify-content:center;margin-top:16px" id="t-btns">
+      <button class="b" onclick="printTicket()">🖨 Cetak ulang</button>
+      <button class="b ghost" onclick="closeModal()">Tutup</button>
+    </div>
+  </div>
+</div>
+<!-- Modal printer termal -->
+<div class="modal" id="printerModal" onclick="if(event.target===this)closePrinter()">
+  <div class="ticket" style="text-align:left;width:min(440px,94vw);max-height:92vh;overflow:auto">
+    <div class="inst" style="text-align:center">PRINTER TERMAL (ESC/POS)</div>
+    <div class="info" id="pr-state" style="margin:10px 0"></div>
+    <div class="row" style="margin:8px 0">
+      <label class="label" style="min-width:110px">Lebar kertas</label>
+      <select id="pr-width" onchange="prSave({width:+this.value})">
+        <option value="58">58 mm (32 kolom)</option>
+        <option value="80">80 mm (48 kolom)</option>
+      </select>
+    </div>
+    <div class="row" style="margin:8px 0">
+      <label class="label" style="min-width:110px">Baud (serial)</label>
+      <select id="pr-baud" onchange="prSave({baud:+this.value})">
+        <option value="9600">9600</option><option value="19200">19200</option>
+        <option value="38400">38400</option><option value="115200">115200</option>
+      </select>
+    </div>
+    <div class="actions" style="margin-top:12px">
+      <button class="b" onclick="prPick('usb')">Hubungkan USB</button>
+      <button class="b" onclick="prPick('serial')">Hubungkan Serial / Bluetooth</button>
+      <button class="b" id="btn-qzsearch" onclick="prQzSearch()">Printer Windows (QZ Tray)</button>
+      <button class="b ghost" onclick="prTest()">Tes cetak</button>
+      <button class="b bad" onclick="prDisconnect()">Putuskan</button>
+      <button class="b ghost" onclick="closePrinter()">Tutup</button>
+    </div>
+    <div class="row hide" id="pr-qzrow" style="margin-top:12px">
+      <label class="label" style="min-width:110px">Printer Windows</label>
+      <select id="pr-qz" onchange="prQzUse(this.value)" style="flex:1;min-width:0"></select>
+    </div>
+    <div class="row hide" id="pr-qzman" style="margin-top:8px">
+      <input type="text" id="pr-qzname" placeholder="Atau ketik nama printer persis seperti di Windows" style="flex:1;min-width:0;padding:8px;border:1px solid var(--line);border-radius:8px;font-size:14px">
+      <button class="b ghost" onclick="prQzManual()">Pakai</button>
+      <button class="b ghost" onclick="prQzDefault()">Printer default</button>
+    </div>
+    <div class="info" id="pr-qzstat" style="font-size:12px;margin-top:6px"></div>
+    <div class="info" style="margin-top:14px;font-size:12px;line-height:1.6;color:#555">
+      • <b>Printer Windows (QZ Tray)</b>: cara paling cocok jika printer thermal sudah terpasang di Windows. Cetak langsung tanpa preview. Perlu memasang aplikasi gratis <b>QZ Tray</b> (qz.io) di komputer ini dan menjalankannya. Saat browser/QZ meminta izin, pilih <b>Allow</b> dan centang <b>Remember</b>.<br>
+      • Gunakan <b>Chrome atau Edge</b> (desktop / Android). Izin printer tersimpan, jadi setelah halaman dibuka ulang printer terhubung otomatis.<br>
+      • <b>USB</b>: di Windows, printer harus memakai driver WinUSB (bisa dipasang dengan aplikasi Zadig). Jika tidak, pakai <b>Serial</b>.<br>
+      • <b>Serial / Bluetooth</b>: untuk printer dengan port COM (USB-serial atau Bluetooth yang sudah dipasangkan di Windows/Android).<br>
+      • Jika printer tidak terhubung atau gagal, cetak otomatis memakai dialog cetak browser.
+    </div>
+  </div>
+</div>
+<div id="printArea"></div>
+<div class="toast" id="toast"></div>
+
+<script src="config.js"></script>
+<script>
+/* Daftar layanan, nama instansi & logo ada di config.js */
+const AUTO_PRINT = true;   // otomatis membuka dialog cetak setelah mengambil nomor
+/* Alamat server database. Kosong = server yang sama dengan halaman ini (dibuka lewat http://...:3000).
+   Jika file ini dibuka langsung (file://), dipakai http://localhost:3000. */
+const API_URL = location.protocol === 'file:' ? 'http://localhost:3000' : '';
+
+/* ===== STATE (disimpan di database server, sinkron antar perangkat) ===== */
+let state = {day:'', tickets:[], current:null, last:null};
+let online = null;
+function setOnline(ok){
+  if(online === ok) return;
+  if(online !== null || !ok) toast(ok ? 'Terhubung kembali ke server database.' : 'Server database tidak terhubung. Pastikan "node server.js" berjalan.', ok ? 2600 : 8000);
+  online = ok;
+}
+async function api(path, body){
+  let r;
+  try{
+    r = await fetch(API_URL + path, body ? {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)} : {cache:'no-store'});
+  }catch(e){ setOnline(false); throw new Error('Server database tidak terhubung'); }
+  setOnline(true);
+  const j = await r.json().catch(() => ({}));
+  if(r.status === 401 && path !== '/api/login' && adminOk){ adminOk = false; render(); toast('Sesi admin berakhir. Silakan masukkan password lagi.', 5000); }
+  if(!r.ok) throw new Error(j.error || ('HTTP ' + r.status));
+  if(j.state){ state = j.state; render(); }
+  return j;
+}
+async function sync(){
+  try{ state = await api('/api/state'); render(); }catch(e){}
+  if(route === 'kiosk') loadPopular();   // perbarui peringkat & saran layanan manual saat ada nomor baru
+}
+try{
+  const es = new EventSource(API_URL + '/api/events');
+  es.onmessage = sync;
+  es.onopen = sync;
+}catch(e){}
+setInterval(sync, 5000);   // cadangan bila koneksi langsung (SSE) terputus
+sync();
+
+/* ===== HELPER ===== */
+const $ = id => document.getElementById(id);
+const pad = n => String(n).padStart(3,'0');
+const svcName = c => (KASI.find(k => k.code === c) || {}).name || c;   // nama Kasi dari kode
+const byId = id => state.tickets.find(t => t.id === id);
+const waiting = () => state.tickets.filter(t => t.status === 'waiting');
+const pending = () => state.tickets.filter(t => t.status === 'pending');
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
+const hhmm = ts => new Date(ts).toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'});
+function toast(msg, ms){ const t=$('toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(toast._t); toast._t=setTimeout(()=>t.classList.remove('show'), ms || 2600); }
+
+/* ===== AKSI PENGUNJUNG ===== */
+let taking = false;
+async function takeTicket(code, svc){
+  if(taking) return;           // cegah klik ganda mencetak 2 nomor
+  fQ = ''; $('q').value = '';   // reset pencarian untuk pengunjung berikutnya
+  taking = true;
+  try{
+    const {ticket} = await api('/api/tickets', {code, svc});   // satu urutan nomor untuk semua Kasi (1 pintu)
+    showTicket(ticket);
+  }catch(e){ toast('Gagal mengambil nomor: ' + e.message, 6000); }
+  finally{ taking = false; }
+}
+function showTicket(t){
+  const ahead = waiting().filter(x => x.id < t.id).length;
+  $('t-no').textContent = t.no;
+  $('t-svc').innerHTML = `${esc(t.svc)}<div style="font-size:14px;color:#555;font-weight:600;margin-top:4px">${svcName(t.code)}</div>`;
+  $('t-info').innerHTML = `${INSTANSI}<br>${new Date(t.at).toLocaleString('id-ID',{dateStyle:'full',timeStyle:'short'})}<br>Antrian di depan Anda: <b>${ahead}</b>`;
+  $('modal').classList.add('open');
+  lastTicket = t;
+  if(AUTO_PRINT) setTimeout(() => printTicket(t), 300);
+  clearTimeout(showTicket._t); showTicket._t = setTimeout(closeModal, 15000);
+}
+function closeModal(){ $('modal').classList.remove('open'); }
+
+/* Cetak tiket: langsung ke printer termal bila terhubung, jika tidak memakai dialog cetak browser */
+let lastTicket = null;
+function printTicket(t){
+  t = t || lastTicket;
+  if(!t) return toast('Belum ada tiket untuk dicetak.');
+  if(PR.type){
+    prPrint(t).catch(e => {
+      toast('Printer termal gagal (' + ((e && e.message) || e) + '). Memakai dialog cetak browser.', 5000);
+      browserPrint(t);
+    });
+    return;
+  }
+  browserPrint(t);
+}
+/* Cetak lewat dialog browser: isi area khusus (#printArea) lalu window.print() */
+function browserPrint(t){
+  let framed = false;
+  try{ framed = window.self !== window.top; }catch(e){ framed = true; }
+  if(framed) toast('Halaman dibuka lewat pratinjau, jadi dialog cetak sering diblokir browser. Unduh file lalu buka langsung di Chrome/Edge.', 7000);
+  $('printArea').innerHTML = `<div class="pt">
+      <div class="i">NOMOR ANTRIAN ANDA</div>
+      <div class="n">${t.no}</div>
+      <div class="s">${$('t-svc').innerHTML}</div>
+      <hr><div class="f">${$('t-info').innerHTML}</div>
+      <hr><div class="f">Mohon menunggu hingga nomor Anda dipanggil.<br>Siapkan berkas persyaratan.</div>
+    </div>`;
+  setTimeout(() => {
+    try{ window.focus(); window.print(); }
+    catch(e){ toast('Cetak diblokir browser. Buka file ini langsung di Chrome/Edge.'); }
+  }, 150);
+}
+/* (cadangan lama, tidak dipakai) cetak lewat iframe */
+function printTicketIframe(t){
+  t = t || lastTicket;
+  if(!t) return toast('Belum ada tiket untuk dicetak.');
+  let framed = false;
+  try{ framed = window.self !== window.top; }catch(e){ framed = true; }
+  if(framed) toast('Halaman dibuka lewat pratinjau, jadi dialog cetak sering diblokir browser. Unduh file lalu buka langsung di Chrome/Edge.', 7000);
+  try{
+    const old = document.getElementById('printFrame'); if(old) old.remove();
+    const f = document.createElement('iframe');
+    f.id = 'printFrame';
+    f.style.cssText = 'position:fixed;right:0;bottom:0;width:300px;height:400px;border:0;opacity:0;pointer-events:none';
+    document.body.appendChild(f);
+    const d = f.contentWindow.document;
+    d.open();
+    d.write(`<!doctype html><html><head><meta charset="utf-8"><title>Tiket ${t.no}</title><style>
+      @page{size:80mm auto;margin:3mm}
+      body{font-family:Arial,Helvetica,sans-serif;text-align:center;margin:0;color:#000}
+      .i{font-weight:700;font-size:14px;letter-spacing:.5px}
+      .n{font-size:68px;font-weight:800;line-height:1.1;margin:6px 0}
+      .s{font-size:16px;font-weight:700;line-height:1.3}
+      .s div{font-size:13px;font-weight:600;margin-top:3px}
+      .f{font-size:12px;line-height:1.6}
+      hr{border:0;border-top:2px dashed #000;margin:8px 0}
+    </style></head><body>
+      <div class="i">NOMOR ANTRIAN ANDA</div>
+      <div class="n">${t.no}</div>
+      <div class="s">${$('t-svc').innerHTML}</div>
+      <hr><div class="f">${$('t-info').innerHTML}</div>
+      <hr><div class="f">Mohon menunggu hingga nomor Anda dipanggil.<br>Siapkan berkas persyaratan.</div>
+    </body></html>`);
+    d.close();
+    setTimeout(() => {
+      try{ f.contentWindow.focus(); f.contentWindow.print(); }
+      catch(e){ window.print(); }
+    }, 300);
+    setTimeout(() => { try{ f.remove(); }catch(e){} }, 60000);
+  }catch(e){
+    toast('Cetak diblokir browser. Buka file ini langsung di Chrome/Edge (klik dua kali), bukan lewat pratinjau.');
+  }
+}
+
+/* ===== PRINTER TERMAL LANGSUNG (ESC/POS via WebUSB / Web Serial) ===== */
+const PR = {type:null, port:null, dev:null, ifc:null, ep:null};
+const prCfg = () => { try{ return JSON.parse(localStorage.getItem('antrian_printer')) || {}; }catch(e){ return {}; } };
+function prSave(o){ try{ localStorage.setItem('antrian_printer', JSON.stringify({...prCfg(), ...o})); }catch(e){} }
+function prStatus(){
+  const b = $('btn-printer'); if(!b) return;
+  b.textContent = PR.type ? '🖨 Printer: terhubung' : '🖨 Hubungkan printer';
+  b.classList.toggle('on', !!PR.type);
+}
+function prUi(){
+  const c = prCfg();
+  $('pr-width').value = String(c.width || 58);
+  $('pr-baud').value = String(c.baud || 9600);
+  $('pr-state').innerHTML = PR.type
+    ? `Status: <b style="color:#16a34a">terhubung (${PR.type === 'usb' ? 'USB' : PR.type === 'qz' ? 'Windows: ' + PR.qzName : 'Serial/Bluetooth'})</b>`
+    : `Status: <b style="color:#dc2626">belum terhubung</b> (cetak memakai dialog browser)`;
+}
+function openPrinter(){ prUi(); $('printerModal').classList.add('open'); }
+function closePrinter(){ $('printerModal').classList.remove('open'); }
+
+async function prConnectSerial(port){
+  if(!port) port = await navigator.serial.requestPort();
+  const baud = +$('pr-baud').value || prCfg().baud || 9600;
+  try{ await port.open({baudRate: baud}); }
+  catch(e){ if(!(e && e.name === 'InvalidStateError')) throw e; }   // sudah terbuka
+  const info = port.getInfo ? port.getInfo() : {};
+  PR.type = 'serial'; PR.port = port;
+  prSave({kind:'serial', baud, vid:info.usbVendorId, pid:info.usbProductId});
+  prStatus();
+}
+async function prConnectUsb(dev){
+  if(!dev) dev = await navigator.usb.requestDevice({filters:[]});
+  if(!dev.opened) await dev.open();
+  if(!dev.configuration) await dev.selectConfiguration(1);
+  let found = null;
+  for(const ifc of dev.configuration.interfaces){
+    for(const alt of ifc.alternates){
+      const ep = alt.endpoints.find(e => e.direction === 'out' && e.type === 'bulk');
+      if(ep && (!found || alt.interfaceClass === 7)) found = {ifc:ifc.interfaceNumber, alt:alt.alternateSetting, ep:ep.endpointNumber};
+    }
+  }
+  if(!found) throw new Error('Jalur cetak USB tidak ditemukan');
+  await dev.claimInterface(found.ifc);
+  if(found.alt) await dev.selectAlternateInterface(found.ifc, found.alt);
+  PR.type = 'usb'; PR.dev = dev; PR.ifc = found.ifc; PR.ep = found.ep;
+  prSave({kind:'usb', vid:dev.vendorId, pid:dev.productId});
+  prStatus();
+}
+async function prPick(kind){
+  try{
+    if(PR.type) await prDisconnect(true);
+    if(kind === 'usb'){
+      if(!navigator.usb) throw new Error('Browser tidak mendukung WebUSB, gunakan Chrome/Edge');
+      await prConnectUsb();
+    } else {
+      if(!navigator.serial) throw new Error('Browser tidak mendukung Web Serial, gunakan Chrome/Edge');
+      await prConnectSerial();
+    }
+    toast('Printer terhubung.');
+  }catch(e){
+    if(e && e.name === 'NotFoundError') { prUi(); return; }   // dialog pilih perangkat dibatalkan
+    toast('Gagal menghubungkan printer: ' + ((e && e.message) || e), 7000);
+  }
+  prUi();
+}
+async function prDisconnect(silent){
+  try{
+    if(PR.type === 'serial') await PR.port.close();
+    else if(PR.type === 'usb'){ await PR.dev.releaseInterface(PR.ifc); await PR.dev.close(); }
+  }catch(e){}
+  PR.type = null; PR.port = null; PR.dev = null;
+  prSave({kind:null}); prStatus(); prUi();
+  if(silent !== true) toast('Printer diputus.');
+}
+async function prAuto(){   // sambung ulang otomatis ke printer yang pernah diizinkan
+  const c = prCfg();
+  try{
+    if(c.kind === 'usb' && navigator.usb){
+      const ds = await navigator.usb.getDevices();
+      const d = ds.find(x => x.vendorId === c.vid && x.productId === c.pid) || ds[0];
+      if(d) await prConnectUsb(d);
+    } else if(c.kind === 'qz' && c.qzName){
+      await qzConnect(); PR.type = 'qz'; PR.qzName = c.qzName;
+    } else if(c.kind === 'serial' && navigator.serial){
+      const ps = await navigator.serial.getPorts();
+      const p = ps.find(x => { const i = x.getInfo ? x.getInfo() : {}; return c.vid && i.usbVendorId === c.vid && i.usbProductId === c.pid; }) || ps[0];
+      if(p) await prConnectSerial(p);
+    }
+  }catch(e){}
+  prStatus();
+}
+try{
+  if(navigator.usb) navigator.usb.addEventListener('disconnect', e => { if(PR.dev === e.device){ PR.type = null; PR.dev = null; prStatus(); toast('Printer USB terputus.', 4000); } });
+  if(navigator.serial) navigator.serial.addEventListener('disconnect', e => { if(PR.port === e.target){ PR.type = null; PR.port = null; prStatus(); toast('Printer terputus.', 4000); } });
+}catch(e){}
+
+/* --- QZ Tray: cetak langsung ke printer yang terpasang di Windows (tanpa preview) --- */
+function loadQz(){
+  return new Promise((res, rej) => {
+    if(window.qz) return res();
+    const s = document.createElement('script');
+    s.src = 'https://cdn.jsdelivr.net/npm/qz-tray@2.2.4/qz-tray.js';
+    s.onload = res;
+    s.onerror = () => rej(new Error('Gagal memuat pustaka QZ Tray (perlu internet)'));
+    document.head.appendChild(s);
+  });
+}
+async function qzConnect(){
+  await withTimeout(loadQz(), 15000, 'Pustaka QZ Tray tidak bisa dimuat. Periksa koneksi internet.');
+  qz.security.setCertificatePromise((resolve) => resolve());
+  qz.security.setSignatureAlgorithm('SHA512');
+  qz.security.setSignaturePromise(() => (resolve) => resolve());
+  if(!qz.websocket.isActive()){
+    await withTimeout(
+      qz.websocket.connect({usingSecure: location.protocol === 'https:', retries:1, delay:1}),
+      15000,
+      'QZ Tray tidak merespons. Pastikan aplikasi QZ Tray sedang berjalan (ikon di system tray) dan klik Allow jika diminta.');
+  }
+}
+function withTimeout(p, ms, msg){
+  return new Promise((res, rej) => {
+    const t = setTimeout(() => rej(new Error(msg)), ms);
+    Promise.resolve(p).then(v => { clearTimeout(t); res(v); }, e => { clearTimeout(t); rej(e); });
+  });
+}
+function qzStat(msg, bad){ const s = $('pr-qzstat'); s.textContent = msg || ''; s.style.color = bad ? '#dc2626' : '#555'; }
+async function prQzSearch(){
+  const btn = $('btn-qzsearch'); btn.disabled = true;
+  $('pr-qzrow').classList.remove('hide'); $('pr-qzman').classList.remove('hide');
+  try{
+    qzStat('Menghubungi QZ Tray... (jika muncul jendela izin dari QZ Tray, klik Allow)');
+    await qzConnect();
+    qzStat('Terhubung. Mengambil daftar printer...');
+    let list = await withTimeout(qz.printers.find(), 25000,
+      'Daftar printer tidak keluar dalam 25 detik. Cek jendela QZ Tray (mungkin menunggu klik Allow).');
+    if(!Array.isArray(list)) list = list ? [list] : [];
+    const sel = $('pr-qz');
+    sel.innerHTML = '<option value="">- pilih printer -</option>' +
+      list.map(n => `<option value="${String(n).replace(/"/g,'&quot;')}">${n}</option>`).join('');
+    const c = prCfg(); if(c.qzName && list.includes(c.qzName)) sel.value = c.qzName;
+    qzStat(list.length ? `${list.length} printer ditemukan. Pilih printer thermal Anda.` : 'Tidak ada printer ditemukan. Ketik nama printer manual di bawah.', !list.length);
+  }catch(e){
+    qzStat(((e && e.message) || String(e)) + ' Anda juga bisa mengetik nama printer secara manual di bawah.', true);
+  }finally{ btn.disabled = false; }
+}
+async function prQzDefault(){
+  try{
+    qzStat('Mengambil printer default...');
+    await qzConnect();
+    const n = await withTimeout(qz.printers.getDefault(), 15000, 'Tidak ada respons dari QZ Tray.');
+    if(n){ await prQzUse(n); qzStat('Printer default dipakai: ' + n); }
+    else qzStat('Printer default tidak ditemukan.', true);
+  }catch(e){ qzStat((e && e.message) || String(e), true); }
+}
+function prQzManual(){
+  const v = $('pr-qzname').value.trim();
+  if(!v) return qzStat('Isi nama printer dulu.', true);
+  prQzUse(v); qzStat('Printer dipakai: ' + v + '. Klik Tes cetak untuk mencoba.');
+}
+async function prQzSearchOld(){
+  try{
+    toast('Menghubungi QZ Tray...', 2500);
+    await qzConnect();
+    let list = await qz.printers.find();
+    if(!Array.isArray(list)) list = list ? [list] : [];
+    const sel = $('pr-qz');
+    sel.innerHTML = '<option value="">- pilih printer -</option>' +
+      list.map(n => `<option value="${String(n).replace(/"/g,'&quot;')}">${n}</option>`).join('');
+    $('pr-qzrow').classList.remove('hide');
+    const c = prCfg(); if(c.qzName && list.includes(c.qzName)) sel.value = c.qzName;
+    toast(list.length ? `${list.length} printer ditemukan. Pilih printer thermal Anda.` : 'Tidak ada printer ditemukan di komputer ini.', 4000);
+  }catch(e){
+    toast('QZ Tray tidak terhubung. Pastikan aplikasi QZ Tray sudah terpasang dan sedang berjalan. (' + ((e && e.message) || e) + ')', 9000);
+  }
+}
+async function prQzUse(name){
+  if(!name) return;
+  if(PR.type && PR.type !== 'qz') await prDisconnect(true);
+  PR.type = 'qz'; PR.qzName = name;
+  prSave({kind:'qz', qzName:name});
+  prStatus(); prUi();
+  toast('Printer dipilih: ' + name);
+}
+
+function escpos(t, ahead){
+  const cols = prCfg().width === 80 ? 48 : 32;
+  const enc = new TextEncoder();
+  const clean = s => String(s == null ? '' : s).normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^\x20-\x7E]/g,'?');
+  const wrap = (s, n) => {
+    const lines = []; let l = '';
+    clean(s).split(' ').forEach(w => {
+      if((l + ' ' + w).trim().length > n){ if(l) lines.push(l); l = w; } else l = (l + ' ' + w).trim();
+    });
+    if(l) lines.push(l); return lines;
+  };
+  const ESC = 0x1b, GS = 0x1d, out = [];
+  const raw = (...b) => out.push(...b);
+  const line = s => { out.push(...enc.encode(clean(s))); out.push(0x0a); };
+  raw(ESC,0x40);                    // reset printer
+  raw(ESC,0x61,1);                  // rata tengah
+  raw(ESC,0x45,1); wrap(INSTANSI.toUpperCase(), cols).forEach(line); raw(ESC,0x45,0);
+  line('NOMOR ANTRIAN ANDA');
+  raw(0x0a);
+  raw(GS,0x21,0x33); raw(ESC,0x45,1); line(t.no); raw(ESC,0x45,0); raw(GS,0x21,0x00);   // nomor besar
+  raw(0x0a);
+  raw(ESC,0x45,1); wrap(t.svc || '', cols).forEach(line); raw(ESC,0x45,0);
+  line(svcName(t.code));
+  line('-'.repeat(cols));
+  line(new Date(t.at).toLocaleString('id-ID',{dateStyle:'medium', timeStyle:'short'}));
+  line('Antrian di depan Anda: ' + ahead);
+  line('-'.repeat(cols));
+  wrap('Mohon menunggu hingga nomor Anda dipanggil. Siapkan berkas persyaratan.', cols).forEach(line);
+  raw(0x0a,0x0a,0x0a,0x0a);         // dorong kertas keluar
+  raw(GS,0x56,0x42,0x00);           // potong kertas
+  return new Uint8Array(out);
+}
+async function prSend(bytes){
+  if(PR.type === 'serial'){
+    const w = PR.port.writable.getWriter();
+    try{ await w.write(bytes); } finally { w.releaseLock(); }
+  } else if(PR.type === 'usb'){
+    for(let i = 0; i < bytes.length; i += 4096) await PR.dev.transferOut(PR.ep, bytes.slice(i, i + 4096));
+  } else if(PR.type === 'qz'){
+    await qzConnect();
+    let s = ''; bytes.forEach(b => { s += String.fromCharCode(b); });
+    await qz.print(qz.configs.create(PR.qzName), [{type:'raw', format:'command', flavor:'base64', data:btoa(s)}]);
+  } else throw new Error('Printer belum terhubung');
+}
+async function prPrint(t){
+  const ahead = waiting().filter(x => x.id < t.id).length;
+  await prSend(escpos(t, ahead));
+}
+async function prTest(){
+  try{
+    if(!PR.type) return toast('Hubungkan printer dulu.');
+    await prSend(escpos({no:'000', svc:'Tes cetak printer', code:KASI[0].code, at:Date.now()}, 0));
+    toast('Tes cetak dikirim ke printer.');
+  }catch(e){ toast('Tes cetak gagal: ' + ((e && e.message) || e), 6000); }
+}
+
+/* ===== AKSI ADMIN ===== */
+let audioCtx = null;
+function chime(){
+  try{
+    audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+    if(audioCtx.state === 'suspended') audioCtx.resume();
+    [[880,0],[660,.35]].forEach(([f,d]) => {
+      const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+      o.type = 'sine'; o.frequency.value = f;
+      const t0 = audioCtx.currentTime + d;
+      g.gain.setValueAtTime(0, t0);
+      g.gain.linearRampToValueAtTime(.4, t0 + .03);
+      g.gain.exponentialRampToValueAtTime(.001, t0 + .6);
+      o.connect(g); g.connect(audioCtx.destination);
+      o.start(t0); o.stop(t0 + .65);
+    });
+  }catch(e){}
+}
+function speak(t){
+  chime();                                  // bunyi "ding-dong" setiap tombol Panggil diklik
+  setTimeout(() => {
+    try{
+      const loket = $('loket').value || 1;
+      const u = new SpeechSynthesisUtterance(`Nomor antrian ${String(t.no).split('').join(' ')}, harap ke loket ${loket}`);
+      u.lang = 'id-ID'; u.rate = .9;
+      const v = speechSynthesis.getVoices().find(x => x.lang && x.lang.toLowerCase().startsWith('id'));
+      if(v) u.voice = v;
+      speechSynthesis.cancel(); speechSynthesis.speak(u);
+    }catch(e){}
+  }, 800);
+}
+try{ speechSynthesis.getVoices(); }catch(e){}
+async function callTicket(id){
+  let res;
+  try{ res = await api('/api/call', {id, loket: +$('loket').value || 1}); }
+  catch(e){ return toast('Gagal memanggil: ' + e.message, 6000); }
+  if(res.error === 'busy') return toast('Selesaikan dulu antrian yang sedang dipanggil (Lanjut / Pending / Batal).');
+  if(res.error) return;
+  speak(res.ticket);
+  try{ window.scrollTo({top:0, behavior:'smooth'}); }catch(e){ window.scrollTo(0,0); }
+}
+function callNext(){
+  const w = waiting()[0];
+  if(!w){
+    const p = pending()[0];
+    return toast(p ? 'Tidak ada antrian menunggu. Panggil dari daftar Pending.' : 'Tidak ada antrian.');
+  }
+  callTicket(w.id);
+}
+function recall(){
+  const t = state.current && byId(state.current);
+  if(t && t.status === 'called') speak(t); else toast('Belum ada antrian yang sedang dipanggil.');
+}
+async function resolve(status){
+  const t = state.current && byId(state.current);
+  if(!t || t.status !== 'called') return toast('Belum ada antrian yang sedang dipanggil.');
+  let res;
+  try{ res = await api('/api/resolve', {status}); }
+  catch(e){ return toast('Gagal menyimpan: ' + e.message, 6000); }
+  if(res.error) return toast('Belum ada antrian yang sedang dipanggil.');
+  toast(`${res.ticket.no}: ` + ({done:'dilanjutkan', pending:'dipending', cancelled:'dibatalkan'})[status]);
+}
+
+/* Riwayat: filter Lanjut / Batal */
+let histFilter = 'all';
+function setHistFilter(f){ histFilter = f; render(); }
+/* Tombol pensil: kembalikan antrian ke daftar Menunggu (posisi nomor semula), lalu gulir ke atas */
+async function restoreTicket(id){
+  let ticket;
+  try{ ({ticket} = await api('/api/status', {id, status:'waiting'})); }
+  catch(e){ return toast('Gagal mengembalikan antrian: ' + e.message, 6000); }
+  toast(`${ticket.no} dikembalikan ke antrian.`);
+  const row = document.querySelector(`#a-waiting tr[data-id="${id}"]`);
+  const target = row || $('a-waiting');
+  try{ target.scrollIntoView({behavior:'smooth', block:'center'}); }catch(e){ target.scrollIntoView(); }
+  if(row){ row.classList.add('flash'); setTimeout(() => row.classList.remove('flash'), 2500); }
+}
+
+/* ===== RENDER ===== */
+let fQ = '';          // kata pencarian
+let fS = 'asli';      // urutan: 'asli' | 'pop' | 'az' | 'za'
+let popList = [];     // [{code, svc, n}] jumlah tiket per layanan (termasuk layanan ketik manual)
+let popCount = {};    // 'kode|layanan' → jumlah tiket yang pernah diambil
+function setQ(v){ fQ = v; renderPick(); }
+function setSort(v){ fS = v; renderPick(); }
+async function loadPopular(){
+  try{
+    popList = await api('/api/popular');
+    popCount = {}; popList.forEach(r => { popCount[r.code + '|' + r.svc] = r.n; });
+    if(route === 'kiosk') renderPick();
+  }catch(e){}
+}
+const popOf = x => popCount[x.code + '|' + x.s] || 0;
+/* Daftar layanan digabung jadi satu (tanpa pengelompokan Kasi di tampilan).
+   Kode Kasi tetap disimpan pada tiket agar admin tahu tujuan Kasi-nya. */
+const ALL_SVC = KASI.flatMap(k => k.services.map(s => ({s, code:k.code})));
+/* Layanan ketik manual (tidak ada di daftar) dicatat ke Kasi ini */
+const MANUAL_CODE = 'U';
+const KNOWN_SVC = new Set(ALL_SVC.map(x => x.s.toLowerCase()));
+const norm = s => String(s).replace(/\s+/g, ' ').trim();
+const matches = (text, q) => { const t = text.toLowerCase(); return q.split(' ').every(w => t.includes(w)); };
+/* riwayat layanan manual yang pernah diajukan, terbanyak dulu */
+const manualSvcs = () => popList.filter(r => !KNOWN_SVC.has(r.svc.toLowerCase()))
+  .sort((a,b) => b.n - a.n).map(r => ({s:r.svc, code:r.code, manual:true}));
+let pickRows = [];
+function pick(n){ const x = pickRows[n]; if(x) takeTicket(x.code, x.s); }
+function renderPick(){
+  const qRaw = norm(fQ), q = qRaw.toLowerCase();
+  const rows = ALL_SVC.filter(x => !q || matches(x.s, q));
+  if(fS === 'az') rows.sort((a,b) => a.s.localeCompare(b.s, 'id', {sensitivity:'base'}));
+  else if(fS === 'za') rows.sort((a,b) => b.s.localeCompare(a.s, 'id', {sensitivity:'base'}));
+  else if(fS === 'pop') rows.sort((a,b) => popOf(b) - popOf(a));   // sort stabil: seri tetap urutan bawaan
+  // saran dari riwayat ketik manual: hanya muncul saat pengunjung mengetik
+  const hist = q ? manualSvcs().filter(x => matches(x.s, q)) : [];
+  pickRows = rows.concat(hist);
+  if(qRaw.length >= 3 && !pickRows.some(x => x.s.toLowerCase() === q)) pickRows.push({s:qRaw, code:MANUAL_CODE, isNew:true});
+
+  const label = x => x.isNew
+      ? `<div class="newsvc">✏️ Layanan lain: <b>“${esc(x.s)}”</b></div><div class="pop hist">Tidak ada di daftar? Ambil nomor dengan nama layanan ini.</div>`
+    : x.manual
+      ? `${esc(x.s)}<div class="pop hist">🕘 Pernah diajukan · ${popOf(x)}×</div>`
+      : `${esc(x.s)}${fS === 'pop' && popOf(x) ? `<div class="pop">🔥 ${popOf(x)}× diambil</div>` : ''}`;
+  const table = pickRows.length
+    ? `<div class="card flat"><table><tr><th style="width:40px">No</th><th>Layanan</th><th></th></tr>` +
+      pickRows.map((x,n) => `<tr${x.isNew ? ' class="newrow"' : ''}><td class="n">${x.isNew ? '+' : n+1}</td><td>${label(x)}</td>
+        <td style="text-align:right"><button class="b" onclick="pick(${n})">Ambil nomor</button></td></tr>`).join('') +
+      `</table></div>`
+    : `<div class="empty" style="text-align:center;padding:30px 0">Layanan tidak ditemukan. Ketik minimal 3 huruf untuk mengajukan layanan lain.</div>`;
+  const tip = q ? '' : `<div class="manual-tip">Layanan yang Anda butuhkan tidak ada di daftar?
+      <button class="b ghost" onclick="$('q').focus()">✏️ Ketik layanan lain</button></div>`;
+  $('picklist').innerHTML = table + tip;
+}
+let route = 'kiosk';
+try{ if(location.hash === '#/admin') route = 'admin'; }catch(e){}
+function go(r){
+  route = r;
+  try{ history.replaceState(null,'', r === 'admin' ? '#/admin' : '#/'); }catch(e){}
+  render();
+  focusLogin();
+}
+
+/* ===== LOGIN HALAMAN ADMIN ===== */
+let adminOk = false;
+function focusLogin(){ if(route === 'admin' && !adminOk) setTimeout(() => $('adm-pass').focus(), 50); }
+async function adminLogin(e){
+  e.preventDefault();
+  $('adm-err').textContent = ''; $('adm-btn').disabled = true;
+  try{
+    await api('/api/login', {password: $('adm-pass').value});
+    adminOk = true; $('adm-pass').value = '';
+    render();
+  }catch(err){
+    $('adm-err').textContent = location.protocol === 'file:'
+      ? 'Halaman Admin harus dibuka lewat http://localhost:3000/#/admin, bukan dari file langsung.'
+      : err.message;
+    $('adm-pass').select();
+  }finally{ $('adm-btn').disabled = false; }
+}
+async function adminLogout(){
+  try{ await api('/api/logout', {}); }catch(e){}
+  adminOk = false; render(); focusLogin();
+}
+api('/api/me').then(() => { adminOk = true; render(); }).catch(focusLogin);
+function render(){
+  const locked = route === 'admin' && !adminOk;
+  $('view-kiosk').classList.toggle('hide', route !== 'kiosk');
+  $('view-login').classList.toggle('hide', !locked);
+  $('view-admin').classList.toggle('hide', route !== 'admin' || locked);
+  $('nav-kiosk').classList.toggle('active', route === 'kiosk');
+  $('nav-admin').classList.toggle('active', route === 'admin');
+
+  const last = state.last && byId(state.last);
+  const wCount = waiting().length, pCount = pending().length;
+
+  if(route === 'kiosk'){
+    $('k-now').textContent = last ? last.no : '—';
+    $('k-nowsvc').textContent = last ? svcName(last.code) : 'Belum ada antrian dipanggil';
+    $('k-wait').textContent = wCount;
+    $('k-pend').textContent = pCount;
+    renderPick();
+  } else if(!locked){
+    const cur = state.current && byId(state.current);
+    const called = cur && cur.status === 'called';
+    $('a-now').textContent = called ? cur.no : '—';
+    $('a-nowsvc').textContent = called ? `${cur.svc} · ${svcName(cur.code)}` : 'Belum ada antrian dipanggil';
+    ['btn-recall','btn-lanjut','btn-pending','btn-batal'].forEach(i => $(i).disabled = !called);
+    $('btn-next').disabled = called;
+    $('a-wcount').textContent = wCount; $('a-pcount').textContent = pCount;
+
+    const svcCell = t => `<td>${esc(t.svc)}<div class="svcsub">${esc(svcName(t.code))}</div></td>`;
+    const tbl = (list, withStatus) => list.length ? `<table><tr><th>No</th><th>Layanan</th><th>Jam</th><th></th></tr>` +
+      list.map(t => `<tr data-id="${t.id}"><td class="no">${t.no}</td>${svcCell(t)}<td>${hhmm(t.at)}</td>
+        <td style="text-align:right"><button class="b" ${called?'disabled':''} onclick="callTicket(${t.id})">Panggil</button></td></tr>`).join('') + `</table>`
+      : `<div class="empty">Tidak ada.</div>`;
+    $('a-waiting').innerHTML = tbl(waiting());
+    $('a-pending').innerHTML = tbl(pending());
+
+    const done = state.tickets.filter(t => t.status === 'done' || t.status === 'cancelled');
+    $('a-hcount').textContent = `· Lanjut ${done.filter(t => t.status === 'done').length} · Batal ${done.filter(t => t.status === 'cancelled').length}`;
+    document.querySelectorAll('#a-hfilter .chip').forEach(c => c.classList.toggle('on', c.dataset.f === histFilter));
+    const hist = done.filter(t => histFilter === 'all' || t.status === histFilter).sort((a,b) => b.doneAt - a.doneAt);
+    const editSel = t => `<button class="b ghost pen" title="Kembalikan ${t.no} ke antrian" aria-label="Kembalikan ${t.no} ke antrian" onclick="restoreTicket(${t.id})">✏️</button>`;
+    const histHtml = hist.length ? `<table><tr><th>No</th><th>Layanan</th><th>Selesai</th><th>Status</th><th></th></tr>` +
+      hist.map(t => `<tr><td class="no">${t.no}</td>${svcCell(t)}<td>${hhmm(t.doneAt)}</td>
+        <td><span class="tag ${t.status}">${t.status === 'done' ? 'Lanjut' : 'Batal'}</span></td>
+        <td style="text-align:right">${editSel(t)}</td></tr>`).join('') + `</table>`
+      : `<div class="empty">${histFilter === 'cancelled' ? 'Tidak ada antrian yang dibatalkan hari ini.' : 'Belum ada riwayat.'}</div>`;
+    // gambar ulang hanya bila berubah (pembaruan otomatis tiap beberapa detik)
+    if(histHtml !== render._hist){ $('a-history').innerHTML = histHtml; render._hist = histHtml; }
+  }
+}
+
+$('btn-next').onclick = callNext;
+$('btn-recall').onclick = recall;
+$('btn-lanjut').onclick = () => resolve('done');
+$('btn-pending').onclick = () => resolve('pending');
+/* Batal: konfirmasi 2 klik (tanpa confirm() bawaan browser yang sering diblokir di pratinjau/iframe) */
+let batalArmed = false, batalTimer = null;
+function disarmBatal(){ batalArmed = false; clearTimeout(batalTimer); $('btn-batal').textContent = '✖ Batal'; }
+$('btn-batal').onclick = () => {
+  const t = state.current && byId(state.current);
+  if(!t || t.status !== 'called') return toast('Belum ada antrian yang sedang dipanggil.');
+  if(!batalArmed){
+    batalArmed = true;
+    $('btn-batal').textContent = `⚠ Yakin batalkan ${t.no}? Klik lagi`;
+    batalTimer = setTimeout(disarmBatal, 4000);
+    return;
+  }
+  disarmBatal();
+  resolve('cancelled');
+};
+function openRekap(){ location.href = (API_URL || '') + '/rekap'; }
+try{ const l = localStorage.getItem('antrian_loket'); if(l) $('loket').value = l; }catch(e){}
+$('loket').onchange = () => { try{ localStorage.setItem('antrian_loket', $('loket').value); }catch(e){} };
+window.addEventListener('hashchange', () => { route = location.hash === '#/admin' ? 'admin' : 'kiosk'; render(); focusLogin(); });
+render();
+prStatus();
+prAuto();
+if(LOGO_URL){ const m = $('brandMark'); m.innerHTML = ''; m.classList.add('logo'); const im = new Image(); im.alt = 'Logo Kabupaten Kutai Kartanegara'; im.src = LOGO_URL; im.onerror = () => { m.classList.remove('logo'); m.innerHTML = '<span>T</span>'; }; m.appendChild(im); }
+</script>
+</body>
+</html>
