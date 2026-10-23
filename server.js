@@ -16,6 +16,13 @@ const DEFAULT_USER = process.env.ADMIN_USER || 'admin';      // akun awal, dibua
 const DEFAULT_PASS = process.env.ADMIN_PASS || 'tabang2026';
 const SESSION_MS = 12 * 3600e3;                                // login berlaku 12 jam
 
+/* Sertifikat QZ Tray: perintah cetak ditandatangani server agar QZ Tray tidak meminta "Allow" setiap kali.
+   digital-certificate.txt juga disalin ke folder QZ Tray sebagai override.crt (lihat README). */
+const QZ_DIR = path.join(DIR, 'qz-cert');
+const readOpt = f => { try { return fs.readFileSync(path.join(QZ_DIR, f), 'utf8'); } catch { return null; } };
+const QZ_CERT = readOpt('digital-certificate.txt');
+const QZ_KEY = readOpt('private-key.pem');
+
 /* ===== DATABASE ===== */
 const db = new DatabaseSync(DB_FILE);
 db.exec(`
@@ -289,7 +296,7 @@ function readJson(req) {
   });
 }
 const STATIC = { '.html': 'text/html; charset=utf-8', '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.svg': 'image/svg+xml', '.webp': 'image/webp', '.ico': 'image/x-icon' };
-const PUBLIC_JS = new Set(['config.js']);   // hanya file JS ini yang boleh diunduh (server.js tidak)
+const PUBLIC_JS = new Set(['config.js', 'qz-tray.js']);   // hanya file JS ini yang boleh diunduh (server.js tidak)
 const PAGES = { '/': 'sistem-antrian.html', '/rekap': 'rekap.html' };
 
 const server = http.createServer(async (req, res) => {
@@ -310,6 +317,11 @@ const server = http.createServer(async (req, res) => {
         req.on('close', () => clients.delete(res));
         return;
       }
+      if (p === '/pasang-sertifikat-qz.bat') {   // pemasang sertifikat QZ untuk komputer lain
+        res.writeHead(200, { 'Content-Type': 'application/octet-stream', 'Content-Disposition': 'attachment; filename="pasang-sertifikat-qz.bat"', 'Cache-Control': 'no-store' });
+        return res.end(fs.readFileSync(path.join(DIR, 'pasang-sertifikat-qz.bat')));
+      }
+      if (p === '/api/qz/cert') return QZ_CERT ? send(res, 200, QZ_CERT, 'text/plain; charset=utf-8') : send(res, 404, { error: 'Sertifikat QZ belum dibuat' });
       if (p === '/api/me') return send(res, 200, { user: requireUser(req) });
       if (p === '/api/rekap') { requireUser(req); return send(res, 200, rekap(...range(url.searchParams))); }
       if (p === '/api/export.csv') {
@@ -337,6 +349,16 @@ const server = http.createServer(async (req, res) => {
         return send(res, 200, { ok: true });
       }
       if (p === '/api/password') return send(res, 200, changePassword(req, await readJson(req)));
+      if (p === '/api/qz/sign') {
+        // hanya untuk halaman dari server ini sendiri, bukan situs lain yang dibuka di browser yang sama
+        let sameOrigin = false;
+        try { sameOrigin = new URL(req.headers.origin).host === req.headers.host; } catch {}
+        if (!sameOrigin) throw httpErr(403, 'Asal permintaan tidak diizinkan');
+        if (!QZ_KEY) throw httpErr(404, 'Kunci QZ belum dibuat');
+        const { data } = await readJson(req);
+        if (typeof data !== 'string' || !data) throw httpErr(400, 'Data kosong');
+        return send(res, 200, crypto.sign('sha512', Buffer.from(data), QZ_KEY).toString('base64'), 'text/plain; charset=utf-8');
+      }
     }
     if (req.method === 'GET' && !p.startsWith('/api/')) {
       const file = PAGES[p] || decodeURIComponent(p.slice(1));

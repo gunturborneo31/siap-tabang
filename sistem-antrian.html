@@ -172,6 +172,10 @@
     .pt .f{font-size:12px;line-height:1.6}
     .pt hr{border:0;border-top:2px dashed #000;margin:8px 0}
   }
+  .rcpt{font-family:ui-monospace,Consolas,"Courier New",monospace;font-size:12px;line-height:1.35;background:#fff;color:#000;border:1px dashed #9aa4b2;border-radius:6px;padding:10px 6px;margin:6px auto 10px;text-align:center;white-space:pre;overflow:hidden;max-width:100%}
+  .rcpt .big{font-size:34px;line-height:1.15}
+  .opt{display:flex;align-items:center;gap:8px;margin:8px 0;font-size:14px;cursor:pointer}
+  .opt input{width:18px;height:18px}
 </style>
 </head>
 <body>
@@ -327,7 +331,7 @@
     <div class="info" id="pr-state" style="margin:10px 0"></div>
     <div class="row" style="margin:8px 0">
       <label class="label" style="min-width:110px">Lebar kertas</label>
-      <select id="pr-width" onchange="prSave({width:+this.value})">
+      <select id="pr-width" onchange="prSave({width:+this.value});prPreview()">
         <option value="58">58 mm (32 kolom)</option>
         <option value="80">80 mm (48 kolom)</option>
       </select>
@@ -339,11 +343,22 @@
         <option value="38400">38400</option><option value="115200">115200</option>
       </select>
     </div>
+    <div class="row" style="margin:8px 0">
+      <label class="label" style="min-width:110px">Jumlah rangkap</label>
+      <select id="pr-copies" onchange="prSave({copies:+this.value})">
+        <option value="1">1 lembar</option><option value="2">2 lembar</option><option value="3">3 lembar</option>
+        <option value="4">4 lembar</option><option value="5">5 lembar</option>
+      </select>
+    </div>
+    <label class="opt"><input type="checkbox" id="pr-auto" onchange="prSave({auto:this.checked})"> Cetak otomatis saat pengunjung memilih layanan</label>
+    <label class="opt"><input type="checkbox" id="pr-popup" onchange="prSave({popup:this.checked})"> Tampilkan nomor di layar setelah mengambil</label>
     <div class="actions" style="margin-top:12px">
-      <button class="b" onclick="prPick('usb')">Hubungkan USB</button>
+      <button class="b" id="btn-qzsearch" onclick="prQzSearch()">Printer kabel di Windows (QZ Tray)</button>
+      <button class="b" onclick="prPick('rawbt')">Android (RawBT)</button>
       <button class="b" onclick="prPick('serial')">Hubungkan Serial / Bluetooth</button>
-      <button class="b" id="btn-qzsearch" onclick="prQzSearch()">Printer Windows (QZ Tray)</button>
+      <button class="b ghost" onclick="prPick('usb')">USB langsung (khusus driver WinUSB)</button>
       <button class="b ghost" onclick="prTest()">Tes cetak</button>
+      <button class="b ok" id="btn-prcheck" onclick="prCheck()">✔ Cek koneksi printer</button>
       <button class="b bad" onclick="prDisconnect()">Putuskan</button>
       <button class="b ghost" onclick="closePrinter()">Tutup</button>
     </div>
@@ -357,12 +372,19 @@
       <button class="b ghost" onclick="prQzDefault()">Printer default</button>
     </div>
     <div class="info" id="pr-qzstat" style="font-size:12px;margin-top:6px"></div>
+    <div id="pr-check" class="hide" style="margin-top:12px;font-size:13px;line-height:1.5;text-align:left"></div>
+    <div class="label" style="margin-top:14px;text-align:center">Pratinjau struk</div>
+    <div class="rcpt" id="pr-preview"></div>
+    <div class="actions" style="justify-content:center">
+      <button class="b ghost" onclick="prBrowserTest()">Cetak lewat dialog browser</button>
+    </div>
     <div class="info" style="margin-top:14px;font-size:12px;line-height:1.6;color:#555">
-      • <b>Printer Windows (QZ Tray)</b>: cara paling cocok jika printer thermal sudah terpasang di Windows. Cetak langsung tanpa preview. Perlu memasang aplikasi gratis <b>QZ Tray</b> (qz.io) di komputer ini dan menjalankannya. Saat browser/QZ meminta izin, pilih <b>Allow</b> dan centang <b>Remember</b>.<br>
+      • <b>Android (RawBT)</b>: untuk printer Bluetooth di HP/tablet Android. Pasang aplikasi gratis <b>RawBT</b> dari Play Store, pilih printer Bluetooth di dalamnya, lalu tekan tombol ini sekali. Struk langsung tercetak tanpa dialog. Halaman harus dibuka lewat <b>https://</b> di Chrome.<br>
+      • <b>Printer kabel di Windows (QZ Tray)</b>: pilih ini untuk printer USB yang sudah muncul di <i>Settings → Printers</i>. Daftar printer muncul di bawah tombol setelah diklik. Cetak langsung tanpa preview. Perlu memasang aplikasi gratis <b>QZ Tray</b> (qz.io) di komputer ini dan menjalankannya, lalu sekali saja jalankan <a href="pasang-sertifikat-qz.bat" download>pasang-sertifikat-qz.bat</a> agar QZ Tray tidak meminta <b>Allow</b> setiap mencetak. Klik <b>✔ Cek koneksi printer</b> untuk memastikan semuanya siap.<br>
       • Gunakan <b>Chrome atau Edge</b> (desktop / Android). Izin printer tersimpan, jadi setelah halaman dibuka ulang printer terhubung otomatis.<br>
-      • <b>USB</b>: di Windows, printer harus memakai driver WinUSB (bisa dipasang dengan aplikasi Zadig). Jika tidak, pakai <b>Serial</b>.<br>
+      • <b>USB langsung</b>: jangan dipakai untuk printer yang sudah terpasang di Windows, karena printernya tidak akan muncul di daftar. Hanya untuk printer yang drivernya diganti ke WinUSB (aplikasi Zadig).<br>
       • <b>Serial / Bluetooth</b>: untuk printer dengan port COM (USB-serial atau Bluetooth yang sudah dipasangkan di Windows/Android).<br>
-      • Jika printer tidak terhubung atau gagal, cetak otomatis memakai dialog cetak browser.
+      • Saat pengunjung memilih layanan, struk dikirim langsung ke printer, tanpa dialog cetak. Jika printer belum terhubung atau gagal, hanya muncul pemberitahuan singkat. Dialog cetak browser hanya dipakai lewat tombol di atas.
     </div>
   </div>
 </div>
@@ -372,7 +394,6 @@
 <script src="config.js"></script>
 <script>
 /* Daftar layanan, nama instansi & logo ada di config.js */
-const AUTO_PRINT = true;   // otomatis membuka dialog cetak setelah mengambil nomor
 /* Alamat server database. Kosong = server yang sama dengan halaman ini (dibuka lewat http://...:3000).
    Jika file ini dibuka langsung (file://), dipakai http://localhost:3000. */
 const API_URL = location.protocol === 'file:' ? 'http://localhost:3000' : '';
@@ -432,42 +453,39 @@ async function takeTicket(code, svc){
   }catch(e){ toast('Gagal mengambil nomor: ' + e.message, 6000); }
   finally{ taking = false; }
 }
+const aheadOf = t => waiting().filter(x => x.id < t.id).length;
+const svcHtml = t => `${esc(t.svc)}<div style="font-size:14px;color:#555;font-weight:600;margin-top:4px">${esc(svcName(t.code))}</div>`;
+const infoHtml = (t, ahead) => `${esc(INSTANSI)}<br>${new Date(t.at).toLocaleString('id-ID',{dateStyle:'full',timeStyle:'short'})}<br>Antrian di depan Anda: <b>${ahead}</b>`;
 function showTicket(t){
-  const ahead = waiting().filter(x => x.id < t.id).length;
-  $('t-no').textContent = t.no;
-  $('t-svc').innerHTML = `${esc(t.svc)}<div style="font-size:14px;color:#555;font-weight:600;margin-top:4px">${svcName(t.code)}</div>`;
-  $('t-info').innerHTML = `${INSTANSI}<br>${new Date(t.at).toLocaleString('id-ID',{dateStyle:'full',timeStyle:'short'})}<br>Antrian di depan Anda: <b>${ahead}</b>`;
-  $('modal').classList.add('open');
   lastTicket = t;
-  if(AUTO_PRINT) setTimeout(() => printTicket(t), 300);
+  if(prOpt('auto')) printTicket(t);   // langsung, tanpa jeda: RawBT butuh klik pengguna yang masih "baru"
+  if(!prOpt('popup')) return toast('Nomor antrian Anda: ' + t.no, 4000);
+  $('t-no').textContent = t.no;
+  $('t-svc').innerHTML = svcHtml(t);
+  $('t-info').innerHTML = infoHtml(t, aheadOf(t));
+  $('modal').classList.add('open');
   clearTimeout(showTicket._t); showTicket._t = setTimeout(closeModal, 15000);
 }
 function closeModal(){ $('modal').classList.remove('open'); }
 
-/* Cetak tiket: langsung ke printer termal bila terhubung, jika tidak memakai dialog cetak browser */
+/* Cetak tiket: langsung ke printer termal, tanpa dialog cetak browser */
 let lastTicket = null;
 function printTicket(t){
   t = t || lastTicket;
   if(!t) return toast('Belum ada tiket untuk dicetak.');
-  if(PR.type){
-    prPrint(t).catch(e => {
-      toast('Printer termal gagal (' + ((e && e.message) || e) + '). Memakai dialog cetak browser.', 5000);
-      browserPrint(t);
-    });
-    return;
-  }
-  browserPrint(t);
+  if(!PR.type) return toast('Printer belum terhubung. Atur di menu 🖨 Printer.', 5000);
+  prPrint(t).catch(e => toast('Gagal mencetak (' + ((e && e.message) || e) + '). Cek menu 🖨 Printer.', 6000));
 }
-/* Cetak lewat dialog browser: isi area khusus (#printArea) lalu window.print() */
+/* Cetak lewat dialog browser (hanya dari menu printer): isi area khusus (#printArea) lalu window.print() */
 function browserPrint(t){
   let framed = false;
   try{ framed = window.self !== window.top; }catch(e){ framed = true; }
   if(framed) toast('Halaman dibuka lewat pratinjau, jadi dialog cetak sering diblokir browser. Unduh file lalu buka langsung di Chrome/Edge.', 7000);
   $('printArea').innerHTML = `<div class="pt">
       <div class="i">NOMOR ANTRIAN ANDA</div>
-      <div class="n">${t.no}</div>
-      <div class="s">${$('t-svc').innerHTML}</div>
-      <hr><div class="f">${$('t-info').innerHTML}</div>
+      <div class="n">${esc(t.no)}</div>
+      <div class="s">${svcHtml(t)}</div>
+      <hr><div class="f">${infoHtml(t, t.id ? aheadOf(t) : 0)}</div>
       <hr><div class="f">Mohon menunggu hingga nomor Anda dipanggil.<br>Siapkan berkas persyaratan.</div>
     </div>`;
   setTimeout(() => {
@@ -521,19 +539,36 @@ function printTicketIframe(t){
 const PR = {type:null, port:null, dev:null, ifc:null, ep:null};
 const prCfg = () => { try{ return JSON.parse(localStorage.getItem('antrian_printer')) || {}; }catch(e){ return {}; } };
 function prSave(o){ try{ localStorage.setItem('antrian_printer', JSON.stringify({...prCfg(), ...o})); }catch(e){} }
+const prOpt = k => prCfg()[k] !== false;   // pilihan centang, bawaan: aktif
+const prCols = () => prCfg().width === 80 ? 48 : 32;
 function prStatus(){
   const b = $('btn-printer'); if(!b) return;
-  b.textContent = PR.type ? '🖨 Printer: terhubung' : '🖨 Hubungkan printer';
+  b.textContent = PR.type ? '🖨 Printer: terhubung' : '🖨 Printer';
   b.classList.toggle('on', !!PR.type);
 }
 function prUi(){
   const c = prCfg();
   $('pr-width').value = String(c.width || 58);
   $('pr-baud').value = String(c.baud || 9600);
+  $('pr-copies').value = String(prCopies());
+  $('pr-auto').checked = prOpt('auto');
+  $('pr-popup').checked = prOpt('popup');
+  const name = {usb:'USB', qz:'Windows: ' + esc(PR.qzName), rawbt:'Android (RawBT)', serial:'Serial/Bluetooth'}[PR.type];
   $('pr-state').innerHTML = PR.type
-    ? `Status: <b style="color:#16a34a">terhubung (${PR.type === 'usb' ? 'USB' : PR.type === 'qz' ? 'Windows: ' + PR.qzName : 'Serial/Bluetooth'})</b>`
-    : `Status: <b style="color:#dc2626">belum terhubung</b> (cetak memakai dialog browser)`;
+    ? `Status: <b style="color:#16a34a">terhubung (${name})</b>`
+    : `Status: <b style="color:#dc2626">belum terhubung</b> (nomor tidak akan tercetak)`;
+  prPreview();
 }
+function sampleTicket(){
+  return lastTicket || {no:'001', svc:(KASI[0].services || [])[0] || 'Contoh layanan', code:KASI[0].code, at:Date.now()};
+}
+function prPreview(){
+  const t = sampleTicket(), cols = prCols(), box = $('pr-preview');
+  box.style.width = (cols + 2) + 'ch';
+  box.innerHTML = receiptLines(t, t.id ? aheadOf(t) : 0, cols)
+    .map(l => `<div${l.big ? ' class="big"' : ''}${l.b ? ' style="font-weight:800"' : ''}>${esc(l.s) || '&nbsp;'}</div>`).join('');
+}
+function prBrowserTest(){ closePrinter(); browserPrint(sampleTicket()); }
 function openPrinter(){ prUi(); $('printerModal').classList.add('open'); }
 function closePrinter(){ $('printerModal').classList.remove('open'); }
 
@@ -568,7 +603,10 @@ async function prConnectUsb(dev){
 async function prPick(kind){
   try{
     if(PR.type) await prDisconnect(true);
-    if(kind === 'usb'){
+    if(kind === 'rawbt'){
+      if(!/Android/i.test(navigator.userAgent)) throw new Error('RawBT hanya untuk HP/tablet Android');
+      PR.type = 'rawbt'; prSave({kind:'rawbt'}); prStatus();
+    } else if(kind === 'usb'){
       if(!navigator.usb) throw new Error('Browser tidak mendukung WebUSB, gunakan Chrome/Edge');
       await prConnectUsb();
     } else {
@@ -598,6 +636,8 @@ async function prAuto(){   // sambung ulang otomatis ke printer yang pernah diiz
       const ds = await navigator.usb.getDevices();
       const d = ds.find(x => x.vendorId === c.vid && x.productId === c.pid) || ds[0];
       if(d) await prConnectUsb(d);
+    } else if(c.kind === 'rawbt'){
+      PR.type = 'rawbt';
     } else if(c.kind === 'qz' && c.qzName){
       await qzConnect(); PR.type = 'qz'; PR.qzName = c.qzName;
     } else if(c.kind === 'serial' && navigator.serial){
@@ -615,20 +655,26 @@ try{
 
 /* --- QZ Tray: cetak langsung ke printer yang terpasang di Windows (tanpa preview) --- */
 function loadQz(){
-  return new Promise((res, rej) => {
-    if(window.qz) return res();
+  // Pakai salinan lokal (qz-tray.js di folder proyek) agar tetap jalan tanpa internet; CDN hanya cadangan
+  const load = src => new Promise((res, rej) => {
     const s = document.createElement('script');
-    s.src = 'https://cdn.jsdelivr.net/npm/qz-tray@2.2.4/qz-tray.js';
-    s.onload = res;
-    s.onerror = () => rej(new Error('Gagal memuat pustaka QZ Tray (perlu internet)'));
+    s.src = src; s.onload = res; s.onerror = rej;
     document.head.appendChild(s);
   });
+  if(window.qz) return Promise.resolve();
+  return load(API_URL + '/qz-tray.js')
+    .catch(() => load('https://cdn.jsdelivr.net/npm/qz-tray@2.2.4/qz-tray.js'))
+    .catch(() => { throw new Error('Gagal memuat pustaka QZ Tray'); });
 }
 async function qzConnect(){
   await withTimeout(loadQz(), 15000, 'Pustaka QZ Tray tidak bisa dimuat. Periksa koneksi internet.');
-  qz.security.setCertificatePromise((resolve) => resolve());
+  // Sertifikat & tanda tangan dari server: QZ Tray yang sudah memasang override.crt tidak lagi meminta "Allow"
+  qz.security.setCertificatePromise((resolve, reject) =>
+    fetch(API_URL + '/api/qz/cert', {cache:'no-store'}).then(r => r.ok ? r.text() : '').then(resolve, () => resolve()));
   qz.security.setSignatureAlgorithm('SHA512');
-  qz.security.setSignaturePromise(() => (resolve) => resolve());
+  qz.security.setSignaturePromise(toSign => (resolve, reject) =>
+    fetch(API_URL + '/api/qz/sign', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({data:toSign})})
+      .then(r => r.ok ? r.text() : '').then(resolve, () => resolve()));
   if(!qz.websocket.isActive()){
     await withTimeout(
       qz.websocket.connect({usingSecure: location.protocol === 'https:', retries:1, delay:1}),
@@ -656,8 +702,17 @@ async function prQzSearch(){
     const sel = $('pr-qz');
     sel.innerHTML = '<option value="">- pilih printer -</option>' +
       list.map(n => `<option value="${String(n).replace(/"/g,'&quot;')}">${n}</option>`).join('');
-    const c = prCfg(); if(c.qzName && list.includes(c.qzName)) sel.value = c.qzName;
-    qzStat(list.length ? `${list.length} printer ditemukan. Pilih printer thermal Anda.` : 'Tidak ada printer ditemukan. Ketik nama printer manual di bawah.', !list.length);
+    if(!list.length) return qzStat('Tidak ada printer ditemukan. Ketik nama printer manual di bawah.', true);
+    // Pilih otomatis: printer yang pernah dipakai → printer default Windows bila thermal → printer thermal pertama
+    const thermal = n => /thermal|pos|receipt|struk|58|80mm|blueprint|bp-|tm-/i.test(n);
+    let def = ''; try{ def = await withTimeout(qz.printers.getDefault(), 8000, ''); }catch(e){}
+    const c = prCfg();
+    const pick = (c.qzName && list.includes(c.qzName) && c.qzName) || (def && list.includes(def) && thermal(def) && def) || list.find(thermal) || '';
+    if(pick){
+      sel.value = pick;
+      await prQzUse(pick);
+      qzStat(`Printer dipilih otomatis: ${pick}. Jika salah, ganti di daftar. Lalu klik Tes cetak.`);
+    } else qzStat(`${list.length} printer ditemukan. Pilih printer thermal Anda di daftar.`);
   }catch(e){
     qzStat(((e && e.message) || String(e)) + ' Anda juga bisa mengetik nama printer secara manual di bawah.', true);
   }finally{ btn.disabled = false; }
@@ -701,53 +756,120 @@ async function prQzUse(name){
   toast('Printer dipilih: ' + name);
 }
 
+/* Isi struk per baris (dipakai untuk cetak ESC/POS dan pratinjau di menu printer) */
+const prClean = s => String(s == null ? '' : s).normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^\x20-\x7E]/g,'?');
+function prWrap(s, n){
+  const lines = []; let l = '';
+  prClean(s).split(' ').forEach(w => {
+    if((l + ' ' + w).trim().length > n){ if(l) lines.push(l); l = w; } else l = (l + ' ' + w).trim();
+  });
+  if(l) lines.push(l); return lines;
+}
+function receiptLines(t, ahead, cols){
+  const L = [], add = (s, o) => L.push({s: prClean(s), ...o});
+  prWrap(INSTANSI.toUpperCase(), cols).forEach(s => add(s, {b:1}));
+  add('NOMOR ANTRIAN ANDA');
+  add('');
+  add(t.no, {b:1, big:1});                // nomor besar
+  add('');
+  prWrap(t.svc || '', cols).forEach(s => add(s, {b:1}));
+  prWrap(svcName(t.code), cols).forEach(s => add(s));
+  add('-'.repeat(cols));
+  add(new Date(t.at).toLocaleString('id-ID',{dateStyle:'medium', timeStyle:'short'}));
+  add('Antrian di depan Anda: ' + ahead);
+  add('-'.repeat(cols));
+  prWrap('Mohon menunggu hingga nomor Anda dipanggil. Siapkan berkas persyaratan.', cols).forEach(s => add(s));
+  return L;
+}
 function escpos(t, ahead){
-  const cols = prCfg().width === 80 ? 48 : 32;
-  const enc = new TextEncoder();
-  const clean = s => String(s == null ? '' : s).normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^\x20-\x7E]/g,'?');
-  const wrap = (s, n) => {
-    const lines = []; let l = '';
-    clean(s).split(' ').forEach(w => {
-      if((l + ' ' + w).trim().length > n){ if(l) lines.push(l); l = w; } else l = (l + ' ' + w).trim();
-    });
-    if(l) lines.push(l); return lines;
-  };
-  const ESC = 0x1b, GS = 0x1d, out = [];
-  const raw = (...b) => out.push(...b);
-  const line = s => { out.push(...enc.encode(clean(s))); out.push(0x0a); };
-  raw(ESC,0x40);                    // reset printer
-  raw(ESC,0x61,1);                  // rata tengah
-  raw(ESC,0x45,1); wrap(INSTANSI.toUpperCase(), cols).forEach(line); raw(ESC,0x45,0);
-  line('NOMOR ANTRIAN ANDA');
-  raw(0x0a);
-  raw(GS,0x21,0x33); raw(ESC,0x45,1); line(t.no); raw(ESC,0x45,0); raw(GS,0x21,0x00);   // nomor besar
-  raw(0x0a);
-  raw(ESC,0x45,1); wrap(t.svc || '', cols).forEach(line); raw(ESC,0x45,0);
-  line(svcName(t.code));
-  line('-'.repeat(cols));
-  line(new Date(t.at).toLocaleString('id-ID',{dateStyle:'medium', timeStyle:'short'}));
-  line('Antrian di depan Anda: ' + ahead);
-  line('-'.repeat(cols));
-  wrap('Mohon menunggu hingga nomor Anda dipanggil. Siapkan berkas persyaratan.', cols).forEach(line);
-  raw(0x0a,0x0a,0x0a,0x0a);         // dorong kertas keluar
-  raw(GS,0x56,0x42,0x00);           // potong kertas
+  const enc = new TextEncoder(), ESC = 0x1b, GS = 0x1d, out = [];
+  out.push(ESC,0x40);                     // reset printer
+  out.push(ESC,0x61,1);                   // rata tengah
+  receiptLines(t, ahead, prCols()).forEach(l => {
+    if(l.big) out.push(GS,0x21,0x33);
+    if(l.b) out.push(ESC,0x45,1);
+    out.push(...enc.encode(l.s), 0x0a);
+    if(l.b) out.push(ESC,0x45,0);
+    if(l.big) out.push(GS,0x21,0x00);
+  });
+  out.push(0x0a,0x0a,0x0a,0x0a);          // dorong kertas keluar
+  out.push(GS,0x56,0x42,0x00);            // potong kertas
   return new Uint8Array(out);
 }
+const toB64 = bytes => { let s = ''; bytes.forEach(b => { s += String.fromCharCode(b); }); return btoa(s); };
 async function prSend(bytes){
-  if(PR.type === 'serial'){
+  if(PR.type === 'rawbt'){
+    // Kirim data mentah ESC/POS ke aplikasi RawBT (Android), tanpa dialog cetak
+    location.href = 'intent:base64,' + toB64(bytes) + '#Intent;scheme=rawbt;package=ru.a402d.rawbtprinter;end;';
+  } else if(PR.type === 'serial'){
     const w = PR.port.writable.getWriter();
     try{ await w.write(bytes); } finally { w.releaseLock(); }
   } else if(PR.type === 'usb'){
     for(let i = 0; i < bytes.length; i += 4096) await PR.dev.transferOut(PR.ep, bytes.slice(i, i + 4096));
   } else if(PR.type === 'qz'){
     await qzConnect();
-    let s = ''; bytes.forEach(b => { s += String.fromCharCode(b); });
-    await qz.print(qz.configs.create(PR.qzName), [{type:'raw', format:'command', flavor:'base64', data:btoa(s)}]);
+    await qz.print(qz.configs.create(PR.qzName), [{type:'raw', format:'command', flavor:'base64', data:toB64(bytes)}]);
   } else throw new Error('Printer belum terhubung');
 }
+const prCopies = () => Math.min(5, Math.max(1, Math.round(+prCfg().copies) || 1));
 async function prPrint(t){
-  const ahead = waiting().filter(x => x.id < t.id).length;
-  await prSend(escpos(t, ahead));
+  // Rangkap dikirim dalam satu kiriman (struk diulang, masing-masing dipotong) agar RawBT/QZ hanya dipanggil sekali
+  const one = escpos(t, aheadOf(t)), n = prCopies(), all = new Uint8Array(one.length * n);
+  for(let i = 0; i < n; i++) all.set(one, i * one.length);
+  await prSend(all);
+}
+/* Cek koneksi printer langkah demi langkah (untuk laptop/HP baru) */
+async function prCheck(){
+  const box = $('pr-check'), btn = $('btn-prcheck'), rows = [];
+  const show = () => { box.innerHTML = rows.map(r => `<div style="margin:4px 0">${r.ok === true ? '✅' : r.ok === false ? '❌' : '⏳'} <b>${r.t}</b>${r.d ? `<div style="color:#555;font-size:12px;margin-left:24px">${r.d}</div>` : ''}</div>`).join(''); };
+  const step = async (t, fn) => {
+    const r = {t, ok:null}; rows.push(r); show();
+    try{ r.d = await fn() || ''; r.ok = true; }catch(e){ r.d = (e && e.message) || String(e); r.ok = false; }
+    show(); return r.ok;
+  };
+  box.classList.remove('hide'); btn.disabled = true;
+  try{
+    if(!await step('Server antrian terhubung', async () => { await api('/api/state'); return location.host || 'localhost'; })) return;
+    if(!await step('Jenis printer dipilih', async () => {
+      if(!PR.type) throw new Error('Belum ada printer. Klik salah satu tombol printer di atas dulu.');
+      return {qz:'Printer kabel di Windows (QZ Tray): ' + esc(PR.qzName), rawbt:'Android (RawBT)', serial:'Serial / Bluetooth', usb:'USB langsung'}[PR.type];
+    })) return;
+    if(PR.type === 'qz'){
+      if(!await step('Sertifikat cetak tersedia di server', async () => {
+        const r = await fetch(API_URL + '/api/qz/cert', {cache:'no-store'});
+        if(!r.ok) throw new Error('Folder qz-cert belum diupload ke server. Tanpa ini QZ Tray selalu meminta Allow.');
+      })) return;
+      let ms = 0;
+      if(!await step('QZ Tray berjalan di komputer ini', async () => {
+        if(window.qz && qz.websocket.isActive()) await qz.websocket.disconnect();   // sambung ulang agar jendela Allow (jika ada) ikut terdeteksi
+        const t0 = Date.now();
+        await withTimeout(qzConnect(), 20000, 'QZ Tray tidak merespons. Pasang dari qz.io, jalankan (ikon di system tray), lalu cek lagi.');
+        ms = Date.now() - t0;
+        return 'Versi ' + await qz.api.getVersion();
+      })) return;
+      await step('Izin otomatis (tanpa klik Allow)', async () => {
+        const t0 = Date.now(); await qz.printers.find(PR.qzName); ms = Math.max(ms, Date.now() - t0);
+        if(ms > 3000) throw new Error('Sepertinya QZ Tray masih meminta Allow. <a href="' + API_URL + '/pasang-sertifikat-qz.bat" download>Unduh pasang-sertifikat-qz.bat</a>, jalankan di komputer ini (sekali saja), lalu cek lagi.');
+        return 'Sertifikat dipercaya QZ Tray';
+      });
+      if(!await step('Printer "' + esc(PR.qzName) + '" ada di Windows', async () => {
+        try{ await qz.printers.find(PR.qzName); }
+        catch(e){ throw new Error('Printer tidak ditemukan. Cek kabel/daya printer dan Settings → Printers, lalu pilih ulang printer.'); }
+      })) return;
+    } else if(PR.type === 'rawbt'){
+      if(!await step('Perangkat Android', async () => { if(!/Android/i.test(navigator.userAgent)) throw new Error('RawBT hanya untuk HP/tablet Android.'); })) return;
+      if(!await step('Koneksi aman (https)', async () => { if(!window.isSecureContext) throw new Error('Buka halaman lewat https://'); })) return;
+    } else {
+      if(!await step('Port printer terbuka', async () => {
+        if(PR.type === 'serial' && !(PR.port && PR.port.writable)) throw new Error('Port tertutup. Hubungkan ulang printer.');
+        if(PR.type === 'usb' && !(PR.dev && PR.dev.opened)) throw new Error('USB tertutup. Hubungkan ulang printer.');
+      })) return;
+    }
+    await step('Tes cetak dikirim', async () => {
+      await prSend(escpos({no:'000', svc:'Cek koneksi printer', code:KASI[0].code, at:Date.now()}, 0));
+      return 'Pastikan struk tes keluar dari printer. Jika tidak keluar: cek kertas, daya, dan lebar kertas.';
+    });
+  }finally{ btn.disabled = false; }
 }
 async function prTest(){
   try{
