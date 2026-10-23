@@ -352,7 +352,10 @@ const server = http.createServer(async (req, res) => {
       if (p === '/api/qz/sign') {
         // hanya untuk halaman dari server ini sendiri, bukan situs lain yang dibuka di browser yang sama
         let sameOrigin = false;
-        try { sameOrigin = new URL(req.headers.origin).host === req.headers.host; } catch {}
+        try {
+          const o = new URL(req.headers.origin).host;   // di VPS, Nginx bisa meneruskan Host asli lewat X-Forwarded-Host
+          sameOrigin = o === req.headers.host || o === String(req.headers['x-forwarded-host'] || '').split(',')[0].trim();
+        } catch {}
         if (!sameOrigin) throw httpErr(403, 'Asal permintaan tidak diizinkan');
         if (!QZ_KEY) throw httpErr(404, 'Kunci QZ belum dibuat');
         const { data } = await readJson(req);
